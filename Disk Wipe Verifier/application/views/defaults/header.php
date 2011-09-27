@@ -10,7 +10,7 @@
 	<link rel="stylesheet" type="text/css" href="/css/blueprint/screen.css" media="screen" />
 	<link rel="stylesheet" type="text/css" href="/css/blueprint/ie.css" />
 	<link rel="stylesheet" type="text/css" href="/css/blueprint/print.css" media="print" />
-	<link rel="stylesheet" type="text/css" href="/css/GoFieldTex.css" />
+	<link rel="stylesheet" type="text/css" href="/css/DiskWipe.css" />
 	<!-- Add the fancy type and button plug-in for Bluepring CSS formatting -->
 	<link rel="stylesheet" type="text/css" href="/css/blueprint/plugins/fancy-type/screen.css" />
 	<link rel="stylesheet" type="text/css" href="/css/blueprint/plugins/buttons/screen.css" />

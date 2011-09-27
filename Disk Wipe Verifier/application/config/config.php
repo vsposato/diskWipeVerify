@@ -14,7 +14,7 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'http://ci.2brosdevelopment.com';
+$config['base_url']	= 'http://diskwipe.nettechconsultants.com';
 
 /*
 |--------------------------------------------------------------------------

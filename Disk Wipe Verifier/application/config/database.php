@@ -42,9 +42,9 @@ $active_group = 'default';
 $active_record = TRUE;
 
 $db['default']['hostname'] = 'localhost';
-$db['default']['username'] = 'dbTimeExpense';
-$db['default']['password'] = 'MN4ufuhNsx778P';
-$db['default']['database'] = 'dbTimeExpense';
+$db['default']['username'] = 'dbDiskWipeVerify';
+$db['default']['password'] = 'cesp8sho6ro2lev';
+$db['default']['database'] = 'dbDiskWipeVerify';
 $db['default']['dbdriver'] = 'mysqli';
 $db['default']['dbprefix'] = '';
 $db['default']['pconnect'] = TRUE;
