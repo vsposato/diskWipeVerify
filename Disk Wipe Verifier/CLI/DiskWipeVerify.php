@@ -8,16 +8,35 @@
 	 * 
 	 */
 
-	global $sortCode;
-	global $validationArray;
-	//Set up the data array for the final data
-	$validation_array = array();
+	/*
+	 * Implement the PEAR package for XML_RPC for communication with the backend server
+	 */
+	require_once('XML/RPC.php');
 	
 	/* Define STDIN in case it wasn't defined somewhere else */
 	if (! defined("STDIN")) {
 		define("STDIN", fopen('php://stdin','r'));
 	}
 	
+	/*
+	 * Define the values that are needed for the XML client connection
+	 */
+	define("xml_path", "dwv_xmlserver");
+	define("xml_server", "diskwipe.nettechconsultants.com");
+	define("xml_port", 80);
+	define("xml_proxy", NULL);
+	define("xml_proxy_port", NULL);
+	define("xml_proxy_user", NULL);
+	define("xml_proxy_pass", NULL);
+	
+	
+	global $sortCode;
+	global $validationArray;
+	
+	//Set up the data array for the final data
+	$validation_array = array();
+	
+
 	function getSystemSerialNumber() {
 		/*
 		 * Here we will use the exec command to pull the system serial number and then
@@ -118,8 +137,8 @@
 			if (($answer != "YES") AND ($answer != "NO")) {
 				// You must enter YES or NO, nothing else
 				// The user said something other than yes or no so loop
+				echo "Are you at sort code {$sortCode}? \n";
 				echo "You must enter either yes or no! \n";
-				echo "What sort code are you at? (enter below) \n";
 			}
 		} while (($answer != "YES")  AND ($answer != "NO"));
 
@@ -165,6 +184,185 @@
 		return $temp_output;
 	}
 	
+	function getPhysicalDiskBaseInformation($fdisk_output) {
+		/*
+		 * This function will take the output of the fdisk output and clean it up for the physical harddrive
+		 * information to and create an array for the sizes of each disk along with the information for that disk
+		 */
+		foreach ($fdisk_output as $data) {
+			/*
+			 * Let's work through each individual line looking for disk
+			 * entries or the partition runs
+			 */
+			$disk_entry = stripos($data, "Disk /");
+
+			if ($disk_entry === FALSE) {
+				/*
+				 * Not a physical disk entry so we can simply continue on to the next line
+				 */
+				continue;
+			} elseif ($disk_entry !== FALSE) {
+				//We found the Disk string inside of the data line so we are going to break it down
+				//Build temporary string to get the 
+				//$temp_disk = substr($data, $disk_entry, 13);
+				$temp_disk = explode(':', $data);
+				$disk_array[] = substr($temp_disk[0], 5, 8);
+			}
+		}
+		
+		// Return all of the Physical Disks that were found
+		return $disk_array;
+	}
+	
+	function getPhysicalDiskSizeInformation($fdisk_output) {
+		/*
+		 * This function will take the output of the fdisk output and clean it up for the physical harddrive
+		 * size information to and create an array for the sizes of each disk along with the information 
+		 * for that disk
+		 * 
+		 * Parameter - $fdisk_output - array - output the FDisk command
+		 * Returns - $size_arry - array - the separated harddrive size information
+		 */
+		foreach ($fdisk_output as $data) {
+			/*
+			 * Let's work through each individual line looking for disk
+			 * entries or the partition runs
+			 */
+			$disk_entry = stripos($data, "Disk /");
+
+			if ($disk_entry === FALSE) {
+				/*
+				 * Not a physical disk entry so we can simply continue on to the next line
+				 */
+				continue;
+			} elseif ($disk_entry !== FALSE) {
+				//We found the Disk string inside of the data line so we are going to break it down
+				//Build temporary string to get the 
+				//$temp_disk = substr($data, $disk_entry, 13);
+				$temp_disk = explode(':', $data);
+				$disk_array[] = substr($temp_disk[0], 5, 8);
+				$size_array[] = cleanHDSize($temp_disk[1]);
+			}
+		}
+		
+		//Return all of the size information for the Physical Disks found
+		return $size_array;
+	}	
+	
+	function getVirtualDiskInformation($fdisk_output) {
+		/*
+		 * This function will take the fdisk output and pass through each line looking for partition entries
+		 * and hands it all back in array form
+		 * 
+		 * Paramater - $fdisk_output - array - output the FDisk command
+		 * Returns - $partition_array - array - the separated listing of each partition found on all physical disks
+		 */
+		foreach ($fdisk_output as $data) {
+			/*
+			 * Let's work through each individual line looking for disk
+			 * entries or the partition runs
+			 */
+			$disk_entry = stripos($data, "Disk /");
+			if ($disk_entry === FALSE) {
+				//We did not find any disk entry so we are going to look for a partition entry
+				$part_entry = stripos($data, "/dev/sd");
+				
+				if ($part_entry !== FALSE) {
+					//We did find a partition entry so we are going to add it to the partition array
+					$partition_array[] = substr($data, $part_entry, 9);
+				}
+			} elseif ($disk_entry !== FALSE) {
+				//This is a physical hard drive not a partition so just continue
+				continue;
+			}
+		}
+
+		//We reached the end of the partition routine so hand back the partitions
+		return $partition_array;
+	}
+
+	function getPhysicalDiskParamaters($disk_array, $partition_array, $size_array) {
+		/*
+		 * Now we need to utilize the hdparm -i command to show all drive
+		 * serial numbers to allow for all drives to have been output. 
+		 * We will utilize the array we built to run hdparm on up to 3 drives
+		 * any more than 3 drives and they will be ignored
+		 */
+		$disk_pass = 1;
+		if (array_count_values($disk_array) > 0) {
+			foreach($disk_array as $key=>$disk) {
+				//Build the actual shell command
+				$exec_command = "hdparm -i {$disk}";
+				//Create the disk id variable
+				$disk_id = substr($disk,(strlen($disk) - 3),3);
+				//Create the dynamic variable for the hdparm output
+				$hdparm_output = $disk_id . "_hdparm_output";
+				//Create the dynamic variable for the hdparm return
+				$hdparm_return = $disk_id . "_return";
+				//Make output and return variables global
+				global $$hdparm_output;
+				global $$hdparm_return;
+				
+				//Display the command prior to running
+				echo "Executing - {$exec_command} {$hdparm_output} {$hdparm_return} \n";
+				//Execute the command
+				exec($exec_command, $$hdparm_output, $$hdparm_return);
+				
+				/*
+				 * Here we are going to process the actual HDPARM output data to be able to determine
+				 * harddrive model and serial number - soon to be function processHdparmOutput
+				 */
+				$model_id = 'disk_model';
+				$firmware_id = 'disk_fw';
+				$serial_id = 'disk_serial';
+				$count_id = 'disk_part_count';
+				$size_id = 'disk_size';
+				
+				if ($$hdparm_return == 0) {
+					//Return value of 0 means a successful run - so process the output
+					foreach($$hdparm_output as $data) {
+						$identification_entry = strpos($data, 'Model=');
+						
+						if ($identification_entry !== FALSE) {
+							//This is the line we need
+							//Separate the model, firmware, and serial number into an array
+							$identification = explode(',', $data);
+							
+							$hdparm_array[$disk_pass][$model_id] = cleanHDIdentification($identification[0]);
+							$hdparm_array[$disk_pass][$firmware_id] = cleanHDIdentification($identification[1]);
+							$hdparm_array[$disk_pass][$serial_id] = cleanHDIdentification($identification[2]);
+							$hdparm_array[$disk_pass][$count_id] = getPartitionCountForDisk($partition_array, $disk_id);
+							$hdparm_array[$disk_pass][$size_id] = $size_array[$key];
+						}
+					} 
+				} else {
+					//A failed return value means the hard drive is most likely our USB drive
+					//We need to create the values and put unknowns in there
+					$hdparm_array[$disk_pass][$model_id] = 'Unknown (USB?)';
+					$hdparm_array[$disk_pass][$firmware_id] = 'Unknown (USB?)';
+					$hdparm_array[$disk_pass][$serial_id] = 'Unknown (USB?)';
+					$hdparm_array[$disk_pass][$count_id] = getPartitionCountForDisk($partition_array, $disk_id);
+					$hdparm_array[$disk_pass][$size_id] = $size_array[$key];										
+				}
+				//Increment the disk counter
+				$disk_pass++;
+			}
+		}
+		return $hdparm_array;	
+	}
+	
+	function buildXMLRPCMessage($validation_array) {
+		/*
+		 * We are going to take the validation array that has been submitted and 
+		 * break it down into a valid XML RPC message to be sent to the web server
+		 * that will then code it and add it to the database
+		 */
+		
+		$parameters = array(XML_RPC_encode($validation_array));
+		$message = new XML_RPC_Message('submitDiskWipe', $parameters);
+		
+		return $message;
+	}
 	//This is the first run of the get sort code routine just to start the process
 	getSortCode();
 	
@@ -196,39 +394,12 @@
 	$fdisk_output = getFdiskInformation();
 	
 	/*
-	 * Here we are going to be running a loop through the array created
-	 * by the fdisk output to see how many drives we found
+	 * Here we will gather the physical disk information, physical disk size 
+	 * information, and the virtual disk breakdowns by disk
 	 */
-	$disk_array = Array();
-	$partition_array = Array();
-	$size_array = Array();
-	
-	foreach ($fdisk_output as $data) {
-		/*
-		 * Let's work through each individual line looking for disk
-		 * entries or the partition runs
-		 */
-		$disk_entry = stripos($data, "Disk /");
-		echo "{$disk_entry} \n";
-		if ($disk_entry === FALSE) {
-			//We did not find any disk entry so we are going to look for a partition entry
-			$part_entry = stripos($data, "/dev/sd");
-			
-			if ($part_entry !== FALSE) {
-				//We did find a partition entry so we are going to add it to the partition array
-				$partition_array[] = substr($data, $part_entry, 9);
-			}
-		} elseif ($disk_entry !== FALSE) {
-			//We found the Disk string inside of the data line so we are going to break it down
-			//Build temporary string to get the 
-			//$temp_disk = substr($data, $disk_entry, 13);
-			$temp_disk = explode(':', $data);
-			$disk_array[] = substr($temp_disk[0], 5, 8);
-			$size_array[] = cleanHDSize($temp_disk[1]);
-		}
-		//We found nothing so we can just loop back
-		echo "{$data} \n";
-	}
+	$disk_array = getPhysicalDiskBaseInformation($fdisk_output);
+	$size_array = getPhysicalDiskSizeInformation($fdisk_output);
+	$partition_array = getVirtualDiskInformation($fdisk_output);
 	
 	//See how many disks were found
 	$num_of_disks = count($disk_array);
@@ -253,72 +424,29 @@
 	echo "\n";
 	print_r($size_array);
 	echo "\n";
+	
 	/*
-	 * Now we need to utilize the hdparm -i command to show all drive
-	 * serial numbers to allow for all drives to have been output. 
-	 * We will utilize the array we built to run hdparm on up to 3 drives
-	 * any more than 3 drives and they will be ignored
+	 * Let's get the physical disk information and insert it into our array
 	 */
-	$disk_pass = 1;
-	if (array_count_values($disk_array) > 0) {
-		foreach($disk_array as $key=>$disk) {
-			//Build the actual shell command
-			$exec_command = "hdparm -i {$disk}";
-			//Create the disk id variable
-			$disk_id = substr($disk,(strlen($disk) - 3),3);
-			//Create the dynamic variable for the hdparm output
-			$hdparm_output = $disk_id . "_hdparm_output";
-			//Create the dynamic variable for the hdparm return
-			$hdparm_return = $disk_id . "_return";
-			//Display the command prior to running
-			echo "Executing - {$exec_command} {$hdparm_output} {$hdparm_return} \n";
-			//Execute the command
-			exec($exec_command, $$hdparm_output, $$hdparm_return);
-			
-			/*
-			 * Here we are going to process the actual HDPARM output data to be able to determine
-			 * harddrive model and serial number - soon to be function processHdparmOutput
-			 */
-			if ($$hdparm_return == 0) {
-				//Return value of 0 means a successful run - so process the output
-				foreach($$hdparm_output as $data) {
-					$identification_entry = strpos($data, 'Model=');
-
-					if ($identification_entry !== FALSE) {
-						//This is the line we need
-						//Separate the model, firmware, and serial number into an array
-						$identification = explode(',', $data);
-						$model_id = 'disk' . $disk_pass . '_model';
-						$firmware_id = 'disk' . $disk_pass . '_fw';
-						$serial_id = 'disk' . $disk_pass . '_serial';
-						$count_id = 'disk' . $disk_pass . '_part_count';
-						$size_id = 'disk' . $disk_pass . '_size';
-						
-						$validation_array[$model_id] = cleanHDIdentification($identification[0]);
-						$validation_array[$firmware_id] = cleanHDIdentification($identification[1]);
-						$validation_array[$serial_id] = cleanHDIdentification($identification[2]);
-						$validation_array[$count_id] = getPartitionCountForDisk($partition_array, $disk_id);
-						$validation_array[$size_id] = $size_array[$key];
-					}
-				} 
-			} else {
-				//A failed return value means the hard drive is most likely our USB drive
-				//We need to create the values and put unknowns in there
-					$model_id = 'disk' . $disk_pass . '_model';
-					$firmware_id = 'disk' . $disk_pass . '_fw';
-					$serial_id = 'disk' . $disk_pass . '_serial';
-					$count_id = 'disk' . $disk_pass . '_part_count';
-					$size_id = 'disk' . $disk_pass . '_size';
-					$validation_array[$model_id] = 'Unknown (USB?)';
-					$validation_array[$firmware_id] = 'Unknown (USB?)';
-					$validation_array[$serial_id] = 'Unknown (USB?)';
-					$validation_array[$count_id] = getPartitionCountForDisk($partition_array, $disk_id);
-					$validation_array[$size_id] = $size_array[$key];										
-			}
-			//Increment the disk counter
-			$disk_pass++;
-		}
-	}
+	$validation_array['disks'] = getPhysicalDiskParamaters($disk_array, $partition_array, $size_array);
+	
+	/*
+	 * Initialize our RPC client object pasing in all appropriate variables
+	 */
+	$client = new XML_RPC_Client(xml_path, xml_server, xml_port, xml_proxy, xml_proxy_port, xml_proxy_user, xml_proxy_pass);
+	/*
+	 * Turn on debugging
+	 */
+	$client->setDebug(1);
+	/*
+	 * Create a response object to catch the information returning from the XML_RPC
+	 * 
+	 */
+	$response = $client->send(buildXMLRPCMessage($validation_array));
+	echo "Message Object \n";
+	print_r(buildXMLRPCMessage($validation_array));
+	echo "Response Object \n";
+	print_r($response);
 
 	echo "\n";
 	print_r($validation_array);	
