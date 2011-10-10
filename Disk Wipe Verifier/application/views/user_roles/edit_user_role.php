@@ -1,5 +1,5 @@
 <div class="span-18">
-<?php if (! $this->session->userdata('logged_in')) { redirect('/users/login'); }  ?>
+<?php /* if (! $this->session->userdata('logged_in')) { redirect('/users/login'); }  */ ?>
 
 <?php
 	//Set the values from the database or a previously failed submission

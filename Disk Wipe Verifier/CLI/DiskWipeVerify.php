@@ -13,6 +13,9 @@
 	 */
 	require_once('XML/RPC.php');
 	
+	//Set the timezone
+	date_default_timezone_set("America/New_York");
+	
 	/* Define STDIN in case it wasn't defined somewhere else */
 	if (! defined("STDIN")) {
 		define("STDIN", fopen('php://stdin','r'));
@@ -32,11 +35,276 @@
 	
 	global $sortCode;
 	global $validationArray;
+	global $asteriskArray;
 	
 	//Set up the data array for the final data
 	$validation_array = array();
-	
 
+	function objectToArray($object) { 
+		  if(!is_object( $object ) && !is_array( $object )) { 
+		      return $object; 
+		  } 
+		  if(is_object($object) ) { 
+		      $object = get_object_vars( $object ); 
+		  }
+		  return array_map('objectToArray', $object ); 
+	}  
+	
+	function getLogFilePath($sortCode) {
+		/*
+		 * This funciton will determine if a sortCode directory already exists
+		 * if it doesn't it will create it, if it does it will just return the directory
+		 */
+		global $sortCode;
+		$oldWorkingDirectory = getcwd();
+		
+		//Determine if we are already in the sortCode directory
+		if( stripos($oldWorkingDirectory, $sortCode) === FALSE) {
+			//We didn't find the sort code in the current working directory
+			//Attempt to change directory to the sortCode directory
+			if(! chdir($sortCode)) {
+				//It didn't work so the directory needs to be created - with wide open permissions
+				mkdir($sortCode, 0777);
+				//Now change directory to the sortCode directory
+				chdir($sortCode);
+			}
+		}
+		
+		//Get the current working directory and append the / 
+		$currentWorkingDirectory = getcwd() . '/';
+		
+		//Return the current working path
+		return $currentWorkingDirectory;
+	}
+	
+	function createLogFile() {
+		/*
+		 * This function will create a file to be used as the log for this process
+		 * and will set the fileHandle to be global
+		 */
+		
+		global $logFile; 
+		global $sortCode;
+		
+		//Determine the path that we will be using
+		$path = getLogFilePath($sortCode);
+		
+		//Create the name of the logfile based upon the path
+		//Remember we will rename if from TempLogFile.txt to 
+		//SerialNumber-YYYY-MM-DD-HH-MM-SS.txt later
+		$logFileName = $path . 'TempLogFile.txt';
+		
+		//Create the logfile and assign the handle to $logFile
+		$logFile = fopen($logFileName, 'w');
+		
+		If (! $logFile ) {
+			return FALSE;
+		} else {
+			return TRUE;
+		}
+		
+	}
+	
+	function writeToLogFile($sectionName, $sectionData, $logFile) {
+		/*
+		 * This function will write data to the log file
+		 * it will take a section name to identify what section
+		 * of the log file we are currently working, a string or array of data
+		 * to actually write, and the log file handle to work with
+		 */
+		
+		global $LogFile;
+		
+		//Now determine if sectionData is an array or a string
+		if( is_array($sectionData) ) {
+			//This is an array so we will need to run a loop to get all the data 
+			//out to the file
+
+			//Write the section name to the logFile
+			fwrite($logFile, $sectionName);
+
+			//Insert carriage return
+			fwrite($logFile, "\n");
+			
+			foreach($sectionData as $key => $dataLine) { 
+				//Write the line key
+				fwrite($logFile, "{$key} = ");
+				//Write a line from the array
+				fwrite($logFile, $dataLine);
+				//Insert carriage return
+				fwrite($logFile, "\n");
+			}
+			//We completed the loop so return true
+			return TRUE;
+		} elseif( is_object($sectionData)) {
+
+			//This is an object so we need to convert it to an array
+			//We will use a conversion function, and then hand it back into the writeToLogFile function
+			writeToLogFile($sectionName, objectToArray($sectionData), $logFile);
+
+		} else {
+
+			//Write the section name to the logFile
+			fwrite($logFile, $sectionName);
+			
+			//This is a single string so just write the line to the file
+			fwrite($logFile, $sectionData);
+
+			//Insert carriage return
+			fwrite($logFile, "\n");
+			
+			//We wrote the data return true
+			return TRUE;
+		}
+		
+		//Something happened if we go down here, so return an error
+		return FALSE;
+	}
+
+	function closeLogFile($logFile) {
+		/*
+		 * This function will close the log file and rename it 
+		 * to the appropriate name SerialNumber-YYYY-MM-DD-HH-MM.txt
+		 * from the TempLogFile.txt
+		 */
+		
+		global $logFile;
+		global $validation_array;
+		global $sortCode;
+
+		//Determine the path that we will be using
+		$path = getLogFilePath($sortCode);
+		
+		$newFileName = $path . $validation_array['machine_serial'] . '-' . date("Y-m-d-H-i", time()) . '.txt';
+		
+		fclose($logFile);
+		
+		$oldFileName = $path . 'TempLogFile.txt';
+		
+		if (! rename($oldFileName, $newFileName) ) {
+			//Something happened during the rename
+			return FALSE;
+		}
+		
+	}
+	
+	function createAsteriskArray() {
+		/*
+		 * This function will open the text file that contains the character to asterisk
+		 * representations and build them into the array $asteriskArray() 
+		 */
+		global $asteriskArray;
+		
+		// Open the file alpha.txt from the current directory
+		$asteriskFile = fopen('alpha.csv', 'r');
+		
+		// Confirm that the file actually opened
+		if (! $asteriskFile) {
+			//File didn't open so return an error
+			echo "File Open Error - alpha.txt does not exist!";
+			
+			return FALSE;
+		}
+		
+		do {
+			//Create the temporary array to hold the line read from the file
+			$tempArray = fgetcsv($asteriskFile);
+			
+			$tempString = '';
+			foreach ($tempArray as $key=>$value) {
+				if($key<2) {
+					//These are the array parameters so skip them
+					continue;
+				} else {
+					if($value == 0) {
+						//This is a 0 so it is a space
+						$tempString .= ' ';
+					} elseif ($value == 1) {
+						//This is a 1 so it is an asterisk
+						$tempString .= '#';
+					}
+				}
+			}
+			
+			//Now that we have the entire string create the array entry
+			//$tempArray[0] is the letter and $tempArray[1] is the line number
+			//of the letter
+			$asteriskArray[$tempArray[0]][$tempArray[1]] = $tempString; 
+			
+		} while (!feof($asteriskFile));
+		
+		return $asteriskArray;
+	}
+	
+	function displayAsteriskMessage($message = NULL) {
+		/*
+		 * This function will load the asterisk file, and then process a message
+		 * on the screen using the predefined character definitions
+		 */
+		global $asteriskArray;
+		if(! $message) {
+			//No message was passed so just return a false
+			return FALSE;
+		}
+		
+		if(! createAsteriskArray()) {
+			//If the asterisk handler returned a failure then return false
+			echo "Asterisk Handler failed to load - error!";
+			return FALSE;
+		}
+		
+		//Determine the length of the message
+		$lengthOfMessage = strlen($message);
+		
+		//Set the line count
+		$lineCount = round(($lengthOfMessage / 13), 0, PHP_ROUND_HALF_UP);
+		
+		//Work to build the lines
+		$currentLineNumber = 1;
+		$currentCharacterNumber = 1;
+		$currentDisplayLineNumber = 1;
+		$currentCharacter = '';
+		$displayMessage = Array();
+		
+		do {
+			if($currentCharacter % 13 === 1) {
+				//We have reached the beginning of the next line so increment
+				$currentLineNumber++;
+			}
+
+			$currentCharacter = strtoupper($message[($currentCharacterNumber - 1)]);
+
+			for($i = 1; $i <= 8; $i++) {
+				//Here we are going to loop through line of the character from 
+				//the asterisk array
+				echo $currentCharacter . "\n";
+				echo $i . "\n";
+				echo $asteriskArray[$currentCharacter][$i] . "\n";
+				//Fix the space to allow for the lowercase s to be the identifier
+				if($currentCharacer === " ") {
+					$currentCharacter = "s";
+				}
+				$displayMessage[$currentLineNumber][$i] .= ' ' . $asteriskArray[$currentCharacter][$i]; 
+			}
+			
+			//Increment the Character Number
+			$currentCharacterNumber++;
+			
+		} while ($currentLineNumber <= $lineCount && $currentCharacterNumber <= $lengthOfMessage);
+
+		//Run a loop for each line of the message
+		foreach($displayMessage as $lineKey => $lineValue) {
+			
+			//Run a loop for each asterisk line of the line of the message
+			foreach($lineValue as $displayLine) {
+				echo $displayLine;
+				echo "\n";
+			}
+			echo "\n";
+		}
+		
+	}
+	
 	function getSystemSerialNumber() {
 		/*
 		 * Here we will use the exec command to pull the system serial number and then
@@ -117,6 +385,8 @@
 	}
 	
 	function getSortCode() {		
+		global $sortCode;
+		
 		//Present the user with a prompt to get the sort code of the site we are at
 		echo "What sort code are you at? (enter below): \n";
 		$sortCode = fread(STDIN,7);
@@ -363,11 +633,20 @@
 		
 		return $message;
 	}
+
 	//This is the first run of the get sort code routine just to start the process
 	getSortCode();
 	
+	//Create the logfile to capture all the data
+	if (! createLogFile() ) {
+		//Log File failed to be created
+		echo "Log file couldn't be opened - aborting!";
+		exit;
+	}
+	
 	//Show the user that we have started the data gathering process
 	echo "Parsing data for sort code - {$sortCode} \n";
+	writeToLogFile("Parsing Begin", "Parsing data for sort code - {$sortCode}", $logFile);
 	
 	//Set the sort code into the validation array
 	$validation_array['sort_code'] = $sortCode;
@@ -406,9 +685,8 @@
 	$validation_array['total_disk_count'] = $num_of_disks;
 	if ($num_of_disks > 0) {
 		//Found some available disks so let's tell us about them
-		echo "There are {$num_of_disks} disk(s) in this system \n";
-		print_r($disk_array);
-		echo "\n";
+		writeToLogFile("Disk Array Information", "There are {$num_of_disks} disk(s) in this system", $logFile);
+		writeToLogFile("", $disk_array, $logFile);
 	}
 	
 	//See how many partitions were found
@@ -416,14 +694,12 @@
 	$validation_array['total_partition_count'] = $num_of_parts;
 	if ($num_of_parts > 0) {
 		//Found some partitions so let's tell us about them
-		echo "There are {$num_of_parts} partition(s) in this system \n";
-		print_r($partition_array);
-		echo "\n";
+		writeToLogFile("Partition Array Information", "There are {$num_of_parts} partition(s) in this system", $logFile);
+		writeToLogFile("", $partition_array, $logFile);
 	}
 	
-	echo "\n";
-	print_r($size_array);
-	echo "\n";
+	//Log the size array information to the file
+	writeToLogFile("Size Array Information", $size_array, $logFile);
 	
 	/*
 	 * Let's get the physical disk information and insert it into our array
@@ -443,50 +719,43 @@
 	 * 
 	 */
 	$response = $client->send(buildXMLRPCMessage($validation_array));
-	echo "Message Object \n";
-	print_r(buildXMLRPCMessage($validation_array));
-	echo "Response Object \n";
-	print_r($response);
+	
+	writeToLogFile("Message Object", buildXMLRPCMessage($validation_array), $logFile);
+	
+	writeToLogFile("Response Object", $response, $logFile);
 
-	echo "\n";
-	print_r($validation_array);	
-	echo "\n";
-	echo "FDISK OUTPUT \n";
-	print_r($fdisk_output);
-	echo "\n";
-	echo "CHASSIS SERIAL=$chassis_serial_number \n";
-	echo "BASEBOARD SERIAL=$baseboard_serial_number \n";
-	echo "SYSTEM SERIAL=$system_serial_number \n";
+	writeToLogFile("Validation Array", $validation_array, $logFile);
+
+	writeToLogFile("Fdisk Output", $fdisk_output, $logFile);
+
+	writeToLogFile("CHASSIS SERIAL", $chassis_serial_number, $logFile);
+	
+	writeToLogFile("BASEBOARD SERIAL", $baseboard_serial_number, $logFile);
+	
+	writeToLogFile("SYSTEM SERIAL", $system_serial_number, $logFile);
+
 	if (isset($sda_return)) {
 		if ($sda_return == 0) {	
-			echo "SDA HDPARM \n";
-			print_r($sda_hdparm_output);
-			echo "\n";
-			echo "SDA RETURN \n";
-			echo $sda_return;
-			echo "\n";
+			writeToLogFile("SDA HDPARM A", $sda_hdparm_output, $logFile);
+			writeToLogFile("SDA RETURN A", $sda_return, $logFile);
 		}
 	}
 	if (isset($sdb_return)) {
 		if ($sdb_return == 0) {
-			echo "SDB HDPARM \n";
-			print_r($sdb_hdparm_output);
-			echo "\n";
-			echo "SDB RETURN \n";
-			echo $sdb_return;
-			echo "\n";
-		}
+			writeToLogFile("SDA HDPARM B", $sdb_hdparm_output, $logFile);
+			writeToLogFile("SDA RETURN B", $sdb_return, $logFile);
+					}
 	}
 	if (isset($sdc_return)) {
 		if ($sdc_return == 0) {
-			echo "SDC HDPARM \n";
-			print_r($sdc_hdparm_output);
-			echo "\n";
-			echo "SDC RETURN \n";
-			echo $sdc_return;
-			echo "\n";
+			writeToLogFile("SDA HDPARM C", $sdc_hdparm_output, $logFile);
+			writeToLogFile("SDA RETURN C", $sdc_return, $logFile);
 		}
 	}
+	
+	closeLogFile($logFile);
+	
+
 /*
  * End of file: DiskWipeVerify.php
  * Location: /DiskWipeVerify.php

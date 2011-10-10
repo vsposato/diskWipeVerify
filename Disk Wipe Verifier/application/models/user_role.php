@@ -26,7 +26,7 @@ class User_role extends CI_Model {
 	
 	public function find_all_active_roles() {
 		//Build a query that will select only roles that are in active state
-		$query = $this->db->get_where('user_roles', array('is_active' => 1));
+		$query = $this->db->get_where('user_roles', array('active' => 1));
 		//Assign results to $all_active_roles variable
 		$this->all_active_roles = $query->result_array();
 		//Clear the results

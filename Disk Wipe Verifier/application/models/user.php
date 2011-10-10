@@ -8,8 +8,6 @@ class User extends CI_Model {
 	function __construct() {
 		/* Call the parent constructor to make sure that the model is fully ready */
 		parent::__construct();
-		//Load the database for this function
-		$this->load->database();
 	}
 	
 	public function login_user ($email_address = null, $password = null) {

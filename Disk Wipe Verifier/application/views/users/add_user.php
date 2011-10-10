@@ -1,5 +1,5 @@
 <div class="span-18">
-	<?php if (! $this->session->userdata('logged_in')) { redirect('/users/login'); }  ?>
+	<?php /* if (! $this->session->userdata('logged_in')) { redirect('/users/login'); } */ ?>
 	<?php echo form_open('users/add_user');?>
 	
 	<fieldset>

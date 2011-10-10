@@ -1,5 +1,5 @@
 <div class="span-18 last">
-<?php if (! $this->session->userdata('logged_in')) { redirect('/users/login'); }  ?>
+<?php /* if (! $this->session->userdata('logged_in')) { redirect('/users/login'); } */ ?>
 
 <?php 
 	//Humanize the headers for easy display
