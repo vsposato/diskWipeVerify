@@ -40,6 +40,20 @@
 	//Set up the data array for the final data
 	$validation_array = array();
 
+	function multi_array_key_exists($needle, $haystack) {
+		foreach ($haystack as $key=>$value) {
+			if ($needle===$key) {
+				return $key;
+			}
+			if (is_array($value)) {
+				if(multi_array_key_exists($needle, $value)) {
+					return $key . ":" . multi_array_key_exists($needle, $value);
+				}
+			}
+		}
+		return false;
+	}
+	
 	function objectToArray($object) { 
 		  if(!is_object( $object ) && !is_array( $object )) { 
 		      return $object; 
@@ -112,8 +126,8 @@
 		 * of the log file we are currently working, a string or array of data
 		 * to actually write, and the log file handle to work with
 		 */
-		
-		global $LogFile;
+
+		global $logFile;
 		
 		//Now determine if sectionData is an array or a string
 		if( is_array($sectionData) ) {
@@ -129,10 +143,16 @@
 			foreach($sectionData as $key => $dataLine) { 
 				//Write the line key
 				fwrite($logFile, "{$key} = ");
-				//Write a line from the array
-				fwrite($logFile, $dataLine);
-				//Insert carriage return
-				fwrite($logFile, "\n");
+				if (is_array($dataLine)) {
+					foreach($dataLine as $subKey => $subDataLine) {
+						//Write the key and data line for the sub array
+						fwrite($logFile, "  {$subKey} = ");
+						fwrite($logFile, "{$subDataLine} \n");
+					}
+				} else {
+					//Write a line from the array
+					fwrite($logFile, "{$dataLine} \n");
+				}
 			}
 			//We completed the loop so return true
 			return TRUE;
@@ -194,35 +214,37 @@
 		 * representations and build them into the array $asteriskArray() 
 		 */
 		global $asteriskArray;
+		global $logFile;
 		
+		$asteriskFilePath = dirname(__FILE__) . '/alpha.csv';
 		// Open the file alpha.txt from the current directory
-		$asteriskFile = fopen('alpha.csv', 'r');
+		$asteriskFile = fopen($asteriskFilePath, 'r');
 		
 		// Confirm that the file actually opened
 		if (! $asteriskFile) {
 			//File didn't open so return an error
-			echo "File Open Error - alpha.txt does not exist!";
+			echo "File Open Error - alpha.csv does not exist!";
 			
 			return FALSE;
 		}
 		
-		do {
+		while (($tempArray = fgetcsv($asteriskFile)) !== FALSE) {
 			//Create the temporary array to hold the line read from the file
-			$tempArray = fgetcsv($asteriskFile);
-			
+						
 			$tempString = '';
+
 			foreach ($tempArray as $key=>$value) {
+
 				if($key<2) {
+
 					//These are the array parameters so skip them
 					continue;
+
 				} else {
-					if($value == 0) {
-						//This is a 0 so it is a space
-						$tempString .= ' ';
-					} elseif ($value == 1) {
-						//This is a 1 so it is an asterisk
-						$tempString .= '#';
-					}
+					
+					//Replace 0 with spaces and 1 with a #
+					$tempString .= ($value == 0) ? ' ' : '#';
+					
 				}
 			}
 			
@@ -231,7 +253,9 @@
 			//of the letter
 			$asteriskArray[$tempArray[0]][$tempArray[1]] = $tempString; 
 			
-		} while (!feof($asteriskFile));
+		}
+		
+		writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
 		
 		return $asteriskArray;
 	}
@@ -242,23 +266,31 @@
 		 * on the screen using the predefined character definitions
 		 */
 		global $asteriskArray;
+		global $logFile;
+		
+		writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
+		
 		if(! $message) {
 			//No message was passed so just return a false
 			return FALSE;
 		}
 		
-		if(! createAsteriskArray()) {
-			//If the asterisk handler returned a failure then return false
-			echo "Asterisk Handler failed to load - error!";
-			return FALSE;
+		if (count($asteriskArray) === 0 ) {
+			if(! createAsteriskArray()) {
+				//If the asterisk handler returned a failure then return false
+				echo "Asterisk Handler failed to load - error!";
+				return FALSE;
+			}
 		}
+
+		$message = trim($message);
 		
 		//Determine the length of the message
 		$lengthOfMessage = strlen($message);
 		
 		//Set the line count
-		$lineCount = round(($lengthOfMessage / 13), 0, PHP_ROUND_HALF_UP);
-		
+		$lineCount = round(($lengthOfMessage / 12), 0, PHP_ROUND_HALF_UP);
+
 		//Work to build the lines
 		$currentLineNumber = 1;
 		$currentCharacterNumber = 1;
@@ -266,8 +298,10 @@
 		$currentCharacter = '';
 		$displayMessage = Array();
 		
-		do {
-			if($currentCharacter % 13 === 1) {
+		while ($currentLineNumber <= $lineCount && $currentCharacterNumber <= $lengthOfMessage) {
+			//writeToLogFile("LOOP TO DISPLAY MESSAGE ","{$currentLineNumber} of {$lineCount}", $logFile);
+			//writeToLogFile("LOOP TO DISPLAY MESSAGE ","{$currentCharacterNumber} of {$lengthOfMessage}", $logFile);
+			if($currentCharacter % 12 === 1) {
 				//We have reached the beginning of the next line so increment
 				$currentLineNumber++;
 			}
@@ -277,20 +311,20 @@
 			for($i = 1; $i <= 8; $i++) {
 				//Here we are going to loop through line of the character from 
 				//the asterisk array
-				echo $currentCharacter . "\n";
-				echo $i . "\n";
-				echo $asteriskArray[$currentCharacter][$i] . "\n";
+				if(! isset($displayMessage[$currentLineNumber][$i]) ) {
+					$displayMessage[$currentLineNumber][$i] = '';
+				}
 				//Fix the space to allow for the lowercase s to be the identifier
-				if($currentCharacer === " ") {
+				if($currentCharacter === " ") {
 					$currentCharacter = "s";
 				}
+				//writeToLogFile("{$displayMessage[$currentLineNumber][$i]} =", "{$asteriskArray[$currentCharacter][$i]}", $logFile);
+				
 				$displayMessage[$currentLineNumber][$i] .= ' ' . $asteriskArray[$currentCharacter][$i]; 
-			}
-			
+			} 
 			//Increment the Character Number
 			$currentCharacterNumber++;
-			
-		} while ($currentLineNumber <= $lineCount && $currentCharacterNumber <= $lengthOfMessage);
+		}
 
 		//Run a loop for each line of the message
 		foreach($displayMessage as $lineKey => $lineValue) {
@@ -424,6 +458,8 @@
 		 * Here we are going to validate that at least 2 of the 3 serial numbers match
 		 * and assign that to the validation array
 		 */
+		global $validation_array;
+		
 		if (($chassisSN == $baseboardSN) || ($chassisSN == $systemSN)) {
 			//Chassis serial number matches one of the other 2 serial numbers - let's use that
 			$validation_array['machine_serial'] = $chassisSN;
@@ -550,7 +586,7 @@
 		//We reached the end of the partition routine so hand back the partitions
 		return $partition_array;
 	}
-
+	
 	function getPhysicalDiskParamaters($disk_array, $partition_array, $size_array) {
 		/*
 		 * Now we need to utilize the hdparm -i command to show all drive
@@ -591,6 +627,7 @@
 				if ($$hdparm_return == 0) {
 					//Return value of 0 means a successful run - so process the output
 					foreach($$hdparm_output as $data) {
+						//Is this the line that has the data we are looking for - it should begin with Model
 						$identification_entry = strpos($data, 'Model=');
 						
 						if ($identification_entry !== FALSE) {
@@ -633,9 +670,168 @@
 		
 		return $message;
 	}
+	
+	function verifyDiskWipe() {
+		/*
+		 * This function will take the information gathered and determine whether or
+		 * not the disk wipe validation passed or failed
+		 */
+		global $validation_array;
+		global $disk_array;
+		global $partition_array;
+		global $size_array;
+		global $num_of_disks;
+		
+		//Set the default disk wipe to be true - only change if it actually fails
+		$diskWipeVerified = 'PASSED';
+		
+		//This is the array that will hold just the display information
+		$display_array = array();
+		
+		//Set the Sort Code
+		$display_array['sort_code'] = $validation_array['sort_code'];
+		
+		//Set the machine serial number
+		$display_array['machine_serial'] = $validation_array['machine_serial'];
+		
+		if ($num_of_disks > 0) {
+			/*
+			 * There are disks available in the machine so let's parse to see 
+			 * which ones are physical disks
+			 */
+			for ($i = 1; $i <= $num_of_disks; $i++) {
+				//Count through each disk to determine
+				//Does this disk contain the string for a failed HDParm meaning it is our USB Drive
+				if (stripos($validation_array['disks'][$i]['disk_model'],'Unknown (USB?)') !== FALSE) {
+					//This is a valid disk so we will pass back the information
+					$diskID = 'DiskNo_' . $i;
+					//Hand the serial number from the original validation array
+					$display_array[$diskID]['SerialNumber'] = $validation_array['disks'][$i]['disk_serial'];
+					//Hand the disk size from the original validation array
+					$display_array[$diskID]['disk_size'] = $validation_array['disks'][$i]['disk_size'];
+					//Hand the partition count from the original validation array
+					$display_array[$diskID]['PartitionCount'] = $validation_array['disks'][$i]['disk_part_count'];
+					//Validate if there are any partitions on the disk - then G-Disk failed on this disk
+					$display_array[$diskID]['DiskWipeVerify'] = ($display_array[$diskID]['PartitionCount'] > 0) ? 'FAILED' : 'PASSED';
+					//If the Gdisk failed on this disk, then update overall verification to FALSE
+					if ($display_array[$diskID]['DiskWipeVerify'] === "FAILED") {
+						$diskWipeVerified = 'FAILED';
+					}
+				}
+			}
+			
+			$display_array['FullDiskWipeVerify'] = ($diskWipeVerified == 'FAILED') ? 'FAILED' : 'PASSED';
+			
+		} else {
+			
+			//No disks were found in the machine so we are going to return false so an error can be handled
+			return FALSE;
+			
+		}
+		
+		//Return the array back to the calling function
+		return $display_array;
+	}
+	
+	function displayNormalMessage($display_array) {
+		/*
+		 * This function will take an array input and display it on the screen using normal characters
+		 * and will not use the asterisk message except for overall failure
+		 */
+		global $logFile;
+		
+		//Check to determine whether or not overall verification failed
+		if ($display_array['FullDiskWipeVerify'] == 'FAILED') {
+			//Overall verification failed so display the failure in asterisks
+			displayAsteriskMessage("FAIL FAIL");
+			//Write to the log file
+			writeToLogFile("Overall Verification Failed", "1 or more disks had active partitions", $logFile);
+			
+			echo "\n";
+			
+			//Let's loop through the array and start displaying values
+			foreach ($display_array as $key => $value) {
+				
+				if (stripos($key, "DiskNo_") !== FALSE) {
+					//Start building the display line with the disk code
+					$displayLine = "Disk Code: {$key} \n";
+					//Let's loop through the Disk Sub-Array
+					foreach ($value as $subKey => $subValue) {
+						//Add each disk subkey to the current line and display the value
+						$displayLine .= "     {$subKey} = {$subValue} \n";
+					}
+					
+					//Display the line on the screen
+					echo $displayLine;
+					
+					//Continue the foreach loop
+					continue;
+					
+				} else {
+					
+					//This isn't a disk so just display the key value pair
+					$displayLine = "{$key} = {$value} \n";
+					
+					//Display the line on the screen
+					echo $displayLine;
+					
+					//Continue the foreach loop
+					continue;
+				}
+			}
+			//Provide a new line
+			echo "\n";
+			
+			//Echo the failed message one more time on the screen
+			displayAsteriskMessage("FAIL FAIL");
+		} elseif ($display_array['FullDiskWipeVerify'] == 'PASSED') {
 
+			//Write to the log file
+			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
+			
+			//Let's loop through the array and start displaying values
+			foreach ($display_array as $key => $value) {
+				
+				if (stripos($key, "DiskNo_") !== FALSE) {
+					//Start building the display line with the disk code
+					$displayLine = "Disk Code: {$key} ";
+					//Let's loop through the Disk Sub-Array
+					foreach ($value as $subKey => $subValue) {
+						//Add each disk subkey to the current line and display the value
+						$displayLine .= "{$subKey} = {$subValue}";
+					}
+					//Add the new line character to the output
+					$displayLine .= "\n";
+					
+					//Display the line on the screen
+					echo $displayLine;
+					
+					//Continue the foreach loop
+					continue;
+					
+				} else {
+					
+					//This isn't a disk so just display the key value pair
+					$displayLine = "{$key} = {$value} \n";
+					
+					//Display the line on the screen
+					echo $displayLine;
+					
+					//Continue the foreach loop
+					continue;
+				}
+			}
+		}
+	}
+
+	//Function clear the screen
+	exec('clear');
+	
+	/* remove this for testing
 	//This is the first run of the get sort code routine just to start the process
 	getSortCode();
+	*/
+	$sortCode = "1234456";
 	
 	//Create the logfile to capture all the data
 	if (! createLogFile() ) {
@@ -753,6 +949,17 @@
 		}
 	}
 	
+	
+	//Clear the screen
+	exec("clear");
+	
+	//Get the display message to be sent to the screen
+	$display_array = verifyDiskWipe();	
+
+	
+	//Now display the message on the screen
+	displayNormalMessage($display_array);
+
 	closeLogFile($logFile);
 	
 
