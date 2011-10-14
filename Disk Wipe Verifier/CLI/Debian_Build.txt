@@ -1,0 +1,58 @@
+Using the Debian base CD install ISO, create a bootable USB drive follow these instructions:
+http://askubuntu.com/questions/16988/how-do-i-install-ubuntu-to-a-usb-key
+Use answer #1, except stop after formatting the USB disk
+
+Download the latest Debian DVD ISO, and create the DVD from it
+
+Boot to the DVD, and select the USB drive as your destination partiton
+
+Do not use automatic partitioning, but rather use manual and set the whole drive as 
+	the root "/" mount point
+Make sure to add the noatime option under Options on the partition screen
+
+Complete the install, but install nothing on the options screen except the base system utilities
+
+Give the root user the password - technet123
+Create a user known as - diskwipe
+Give the diskwipe user the password of - password
+
+Let the installation finish
+
+setup the autologin
+
+at the prompt - su -c "nano /etc/initab" and enter the password for root when prompted
+comment out the line that reads - 1:2345:respawn:/sbin/getty 38400 tty1
+	it may not look exactly like that, but it will be close
+
+add the following line right below the line you just commented out
+	1:2345:respawn:/bin/login -f diskwipe tty1 </dev/tty1 >/dev/tty1 2>&1
+	
+Save the file by hitting Ctrl+X and follow the save prompts
+
+Now when you reboot you should auto-login to the prompt
+
+at the prompt - su -c "apt-get update" and enter the password for root when prompted
+at the prompt - su -c "apt-get install php5-cli php-pear hdparm dmidecode" and enter
+	the password for root when prompted
+
+Accept the package selection that is provided by the apt-get function
+
+at the prompt - su -c "pear channel-update pear.php.net" and enter password for root when prompted
+at the prompt - su -c "pear install -f XML_RPC" and enter password for root when prompted
+at the prompt - su -c "pear install -f XML_RPC2" and enter password for root when prompted
+
+at the prompt - su -c "visudo" and enter the password for root when prompted
+
+find the line that states root ALL=(ALL) ALL
+add a line directly below that to read
+diskwipe ALL=(ALL) NOPASSWD:/sbin/hdparm, /bin/chown, /usr/sbin/dmidecode, /sbin/fdisk
+
+Save the file by hitting Ctrl+X and follow the save prompts
+
+Reboot into thumbdrive - su -c "reboot" and enter root password when prompted
+
+You should make sure to hit the boot menu button in the BIOS to make sure that you select the USB
+	drive and not the default hard drive
+
+Now your system should be setup to be used
+

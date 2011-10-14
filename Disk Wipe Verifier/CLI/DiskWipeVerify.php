@@ -345,7 +345,7 @@
 		 * hand it back to the calling function
 		 */
 		
-		 exec('dmidecode -s system-serial-number', $tempSerialNumber);
+		 exec('sudo dmidecode -s system-serial-number', $tempSerialNumber);
 		 
 		 //Shift the first array item off to the return value
 		 return array_shift($tempSerialNumber);
@@ -357,7 +357,7 @@
 		 * hand it back to the calling function
 		 */
 		
-		 exec('dmidecode -s baseboard-serial-number', $tempSerialNumber);
+		 exec('sudo dmidecode -s baseboard-serial-number', $tempSerialNumber);
 		 
 		 //Shift the first array item off to the return value
 		 return array_shift($tempSerialNumber);
@@ -370,7 +370,7 @@
 		 * hand it back to the calling function
 		 */
 		
-		 exec('dmidecode -s chassis-serial-number', $tempSerialNumber);
+		 exec('sudo dmidecode -s chassis-serial-number', $tempSerialNumber);
 		 
 		 //Shift the first array item off to the return value
 		 return array_shift($tempSerialNumber);
@@ -485,7 +485,7 @@
 		 * information from the sytem for later cleanup
 		 */
 		
-		exec('fdisk -l', $temp_output);
+		exec('sudo fdisk -l', $temp_output);
 		
 		return $temp_output;
 	}
