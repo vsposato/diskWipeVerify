@@ -829,7 +829,7 @@
 		global $logFile;
 		
 		$folderToChange = dirname(__FILE__) . "/{$sortCode}";
-		$commandToExecute = "chown -R diskwipe:users {$folderToChange}";
+		$commandToExecute = "sudo chown -R diskwipe:users {$folderToChange}";
 		
 		exec($commandToExecute, $chmodOutput, $chmodReturn);
 		
