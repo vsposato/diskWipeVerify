@@ -255,7 +255,7 @@
 			
 		}
 		
-		writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
+		//writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
 		
 		return $asteriskArray;
 	}
@@ -268,7 +268,7 @@
 		global $asteriskArray;
 		global $logFile;
 		
-		writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
+		//writeToLogFile("Display Asterisk Array", $asteriskArray, $logFile);
 		
 		if(! $message) {
 			//No message was passed so just return a false
@@ -594,11 +594,14 @@
 		 * We will utilize the array we built to run hdparm on up to 3 drives
 		 * any more than 3 drives and they will be ignored
 		 */
+		
+		global $logFile;
+		
 		$disk_pass = 1;
 		if (array_count_values($disk_array) > 0) {
 			foreach($disk_array as $key=>$disk) {
 				//Build the actual shell command
-				$exec_command = "hdparm -i {$disk}";
+				$exec_command = "sudo hdparm -i {$disk}";
 				//Create the disk id variable
 				$disk_id = substr($disk,(strlen($disk) - 3),3);
 				//Create the dynamic variable for the hdparm output
@@ -606,11 +609,13 @@
 				//Create the dynamic variable for the hdparm return
 				$hdparm_return = $disk_id . "_return";
 				//Make output and return variables global
+
 				global $$hdparm_output;
 				global $$hdparm_return;
 				
 				//Display the command prior to running
 				echo "Executing - {$exec_command} {$hdparm_output} {$hdparm_return} \n";
+
 				//Execute the command
 				exec($exec_command, $$hdparm_output, $$hdparm_return);
 				
@@ -623,14 +628,17 @@
 				$serial_id = 'disk_serial';
 				$count_id = 'disk_part_count';
 				$size_id = 'disk_size';
-				
+				writeToLogFile("{$hdparm_output}", " {$$hdparm_return}", $logFile);
 				if ($$hdparm_return == 0) {
+
 					//Return value of 0 means a successful run - so process the output
 					foreach($$hdparm_output as $data) {
+
 						//Is this the line that has the data we are looking for - it should begin with Model
 						$identification_entry = strpos($data, 'Model=');
 						
 						if ($identification_entry !== FALSE) {
+
 							//This is the line we need
 							//Separate the model, firmware, and serial number into an array
 							$identification = explode(',', $data);
@@ -643,6 +651,7 @@
 						}
 					} 
 				} else {
+
 					//A failed return value means the hard drive is most likely our USB drive
 					//We need to create the values and put unknowns in there
 					$hdparm_array[$disk_pass][$model_id] = 'Unknown (USB?)';
@@ -702,7 +711,8 @@
 			for ($i = 1; $i <= $num_of_disks; $i++) {
 				//Count through each disk to determine
 				//Does this disk contain the string for a failed HDParm meaning it is our USB Drive
-				if (stripos($validation_array['disks'][$i]['disk_model'],'Unknown (USB?)') !== FALSE) {
+
+				if ((stripos($validation_array['disks'][$i]['disk_model'],'Unknown (USB?)')) === FALSE) {
 					//This is a valid disk so we will pass back the information
 					$diskID = 'DiskNo_' . $i;
 					//Hand the serial number from the original validation array
@@ -779,59 +789,66 @@
 					continue;
 				}
 			}
-			//Provide a new line
-			echo "\n";
-			
-			//Echo the failed message one more time on the screen
-			displayAsteriskMessage("FAIL FAIL");
 		} elseif ($display_array['FullDiskWipeVerify'] == 'PASSED') {
-
 			//Write to the log file
 			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
-			
 			//Let's loop through the array and start displaying values
 			foreach ($display_array as $key => $value) {
-				
 				if (stripos($key, "DiskNo_") !== FALSE) {
 					//Start building the display line with the disk code
-					$displayLine = "Disk Code: {$key} ";
+					$displayLine = "Disk Code: {$key} \n";
 					//Let's loop through the Disk Sub-Array
 					foreach ($value as $subKey => $subValue) {
 						//Add each disk subkey to the current line and display the value
-						$displayLine .= "{$subKey} = {$subValue}";
+						$displayLine .= "     {$subKey} = {$subValue}\n";
 					}
-					//Add the new line character to the output
-					$displayLine .= "\n";
-					
 					//Display the line on the screen
 					echo $displayLine;
-					
 					//Continue the foreach loop
 					continue;
-					
 				} else {
-					
 					//This isn't a disk so just display the key value pair
 					$displayLine = "{$key} = {$value} \n";
-					
 					//Display the line on the screen
 					echo $displayLine;
-					
 					//Continue the foreach loop
 					continue;
 				}
 			}
+			displayAsteriskMessage($display_array['machine_serial']);
 		}
 	}
 
-	//Function clear the screen
-	exec('clear');
-	
-	/* remove this for testing
+	function fixPermissionsOnLogs() {
+		/*
+		 * This function will go through and fix the permissions on the log files
+		 * this will allow the standard user to read them
+		 */
+		
+		global $sortCode;
+		global $logFile;
+		
+		$folderToChange = dirname(__FILE__) . "/{$sortCode}";
+		$commandToExecute = "chown -R diskwipe:users {$folderToChange}";
+		
+		exec($commandToExecute, $chmodOutput, $chmodReturn);
+		
+		if ($chmodReturn === 0) {
+			writeToLogFile("Chown Return \n", $chmodReturn, $logFile);
+			return TRUE;
+		} else {
+			writeToLogFile("Chown Return \n", $chmodReturn, $logFile);
+			return FALSE;
+		}
+		
+		
+	}
+
+	//Clear the screen
+	passthru('clear');
+		
 	//This is the first run of the get sort code routine just to start the process
 	getSortCode();
-	*/
-	$sortCode = "1234456";
 	
 	//Create the logfile to capture all the data
 	if (! createLogFile() ) {
@@ -909,7 +926,7 @@
 	/*
 	 * Turn on debugging
 	 */
-	$client->setDebug(1);
+	//$client->setDebug(1);
 	/*
 	 * Create a response object to catch the information returning from the XML_RPC
 	 * 
@@ -924,11 +941,11 @@
 
 	writeToLogFile("Fdisk Output", $fdisk_output, $logFile);
 
-	writeToLogFile("CHASSIS SERIAL", $chassis_serial_number, $logFile);
+	writeToLogFile("Chassis Serial", $chassis_serial_number, $logFile);
 	
-	writeToLogFile("BASEBOARD SERIAL", $baseboard_serial_number, $logFile);
+	writeToLogFile("Baseboard Serial", $baseboard_serial_number, $logFile);
 	
-	writeToLogFile("SYSTEM SERIAL", $system_serial_number, $logFile);
+	writeToLogFile("System Serial", $system_serial_number, $logFile);
 
 	if (isset($sda_return)) {
 		if ($sda_return == 0) {	
@@ -951,16 +968,18 @@
 	
 	
 	//Clear the screen
-	exec("clear");
+	passthru('clear');
 	
 	//Get the display message to be sent to the screen
 	$display_array = verifyDiskWipe();	
 
-	
 	//Now display the message on the screen
 	displayNormalMessage($display_array);
 
+	fixPermissionsOnLogs();
+	
 	closeLogFile($logFile);
+
 	
 
 /*
