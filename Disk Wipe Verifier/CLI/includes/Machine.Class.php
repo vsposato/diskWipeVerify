@@ -7,7 +7,6 @@ class Machine {
 	 * 
 	 */
 	
-	protected $siteCode = '';
 	protected $serialNumber = '';
 	protected $serialNumberType = '';
 	protected $hardDriveCount = 0;
@@ -28,7 +27,7 @@ class Machine {
 		 */
 		global $logFile;
 		
-		WriteToLogFile("Machine Class", "Instantiate", $logFile);
+		writeToLogFile("Machine Class ", "Instantiate", $logFile);
 		
 		/* Define STDIN in case it wasn't defined somewhere else */
 		if (! defined("STDIN")) {
@@ -38,9 +37,12 @@ class Machine {
 		// Import the Hard Drive class
 		require_once('HardDrive.Class.php');
 		
+		// We will need to set the serial number of the machine
+		$this->setSerialNumber();
+		
 		// We will now get the hard drive information and create new hard drives for each drive in this machine
 		$this->findHardDrives();
-		WriteToLogFile("Machine Class", "Finished Finding Hard Drives", $logFile);
+		writeToLogFile("Machine Class ", "Finished Finding Hard Drives", $logFile);
 		
 		// We are now going to determine if all valid hard drives have been wiped and therefore the machine has passed
 		$this->determineWipeStatus();
@@ -182,18 +184,27 @@ class Machine {
 		 * machine that are NOT the bootable verify drive
 		 */
 		
+		writeToLogFile("Machine Class ", "setHardDriveCount - begin", $logFile);
+		
 		// We need to make sure that the fdisk array has already been setup, and if not we will run the function to set it up
-		if (! empty($this->fdiskOutput)) {
+		if (empty($this->fdiskOutput)) {
 			/*
 			 * There currently is nothing in the fdisk output array so we will need to call the function
 			 * to create the data
 			 */
+			
+			writeToLogFile("Machine Class ", "setHardDriveCount - inside if fdiskOutput", $logFile);
+			
 			$this->_fdiskOutputCreation();
 		}
 		
 		// We are going to use the count of the fdiskOutput array to give us the number of hard drives
 		// since the exec command that we used was specific to lines that output harddrives
+		writeToLogFile("Machine Class ", "setHardDriveCount - after if hardDriveCount={$this->hardDriveCount}", $logFile);
+		
 		$this->hardDriveCount = count($this->fdiskOutput);
+
+		writeToLogFile("Machine Class ", "setHardDriveCount - after assignment hardDriveCount={$this->hardDriveCount}", $logFile);
 		
 		/*
 		 * If the hard drive count is 1, then we have encountered a drilling situation so we need
@@ -203,6 +214,8 @@ class Machine {
 			/*
 			 * We found only one hard drive so we need to set the drill status class property
 			 */
+			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $logFile);
+			
 			$this->setDrillStatus();
 		}	
 	}
@@ -325,10 +338,14 @@ class Machine {
 		 * of the hard drive class
 		 */	
 		
+		writeToLogFile("Machine Class ", "createHardDriveInstances - begin", $logFile);
+		
 		//We didn't drill the hard drives so continue the process
 		foreach ($this->fdiskOutput as $disk) {
 			// We are going to process each row of disk data to create new hard drive instances
 			$tempHDIdentifier = $this->_cleanFdiskLine($disk);
+			
+			writeToLogFile("Machine Class ", "createHardDriveInstances - inside foreach tempHDIdentifier={$tempHDIdentifier}", $logFile);
 			
 			// We are going to now create a new instance of a hard drive and assign it to my class property
 			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);

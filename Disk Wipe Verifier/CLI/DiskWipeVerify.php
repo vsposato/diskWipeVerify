@@ -3,7 +3,7 @@
 	/*
 	 * Set some global variables for use throughout
 	 */
-	global $sortCode = '';
+	global $sortCode;
 	global $logFile;
 
 
@@ -49,7 +49,7 @@
 	passthru('reset');
 	
 	// Get the site code
-	setSiteCode();
+	setSortCode();
 
 	//Create the logfile to capture all the data
 	if (! createLogFile() ) {
@@ -66,8 +66,11 @@
 	$checkWorkstation = new Machine();
 	
 	// Dump the object to the screen
-	var_dump($checkWorkstation);
+	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);
 
+	// Close the log file
+	closeLogFile($logFile);
+	
 /*
  * End of File: DiskWipeVerify.php
  * Class: Main (No Class)

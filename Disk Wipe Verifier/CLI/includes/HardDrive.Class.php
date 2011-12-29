@@ -24,6 +24,7 @@ class HardDrive {
 		 */
 		global $logFile;
 		
+		WriteToLogFile("Hard Drive Class ", "Instantiate", $logFile);
 		
 		/* Define STDIN in case it wasn't defined somewhere else */
 		if (! defined("STDIN")) {
