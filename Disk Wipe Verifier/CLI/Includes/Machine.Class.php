@@ -11,6 +11,7 @@ class Machine {
 	protected $serialNumber = '';
 	protected $serialNumberType = '';
 	protected $hardDriveCount = 0;
+	protected $validDriveCount = 0;
 	protected $hardDrives = array();
 	protected $fdiskOutput = array();
 	protected $diskWipeStatus = false;
@@ -21,6 +22,11 @@ class Machine {
 		 * This will create a new instance of a machine and build the
 		 * class properities that can be filled in
 		 */
+		
+		/* Define STDIN in case it wasn't defined somewhere else */
+		if (! defined("STDIN")) {
+			define("STDIN", fopen('php://stdin','r'));
+		}
 		
 		// Import the Hard Drive class
 		require_once('HardDrive.Class.php');
@@ -50,35 +56,96 @@ class Machine {
 		 * to hard drives that are not part of the verification system
 		 */
 		
-		// Create temporary array to be returned 
+		// Create temporary array to be returned
+		$tempHardDriveArray = array("disks" => array("count" => $this->validDriveCount));
+		
 		foreach ($this->hardDrives as $disk) {
+			if ($disk->getValidDisk) {
+				//This is a valid disk so build the array
+				
+				//Add the serial number
+				$tempHardDriveArray["disks"][$disk->getDiskID()]["serial"] = $disk->getSerialNumber();
+				
+				//Add the wipemethod
+				$tempHardDriveArray["disks"][$disk->getDiskID()]["wipemethod"] = $disk->getWipeMethod();
+				
+				//Add the wipe status
+				$tempHardDriveArray["disks"][$disk->getDiskID()]["wipestatus"] = $disk->getWipeValidation();
+				
+			} else {
+				
+				//This disk belongs to the verification system or is USB so ignore it
+				continue;
 			
+			}
 		}
+		
+		// Pass the array back to the calling function
+		return $tempHardDriveArray;
 	}
 	
 	public function getSiteCode() {
+		/*
+		 * This function will return the site code entered by the user
+		 */
 		
+		return $this->siteCode;
 	}
 	
 	public function getSerialNumber() {
+		/*
+		 * This function will return the serial number found by the 
+		 */
 		
+		return $this->serialNumber;
+	}
+
+	public function getSerialNumberType() {
+		/*
+		 * This function will return where the serial number came from using the 
+		 * serialNumberType class property
+		 */	
+		
+		return $this->serialNumberType;
 	}
 	
 	public function getWipeStatus() {
-		
-	}
-	
-	protected function findHardDrives() {
 		/*
-		 * This function will find all of the active hard drives within the machine
-		 * and set the counter
-		 */
+		 * This function will return the wipe status of the machine (all hard drives wiped or not)
+		 */	
 		
-		// We are going to call the function that gets a hard drive count using basic linux commandline functions
-		$this->setHardDriveCount();
+		return $this->diskWipeStatus;
+	}
+
+	protected function setSerialNumber() {
+		/*
+		 * This function will gather the 3 BIOS available serial numbers and then compare to determine
+		 * which serial number is the most accurate
+		 */	
 		
-		// We are going to process the fdiskOutput array to create a new hardDrive class for each hard drive in the machine
-		$this->createHardDriveInstances();
+		// Create the temporary variables to hold the 3 serial numbers
+		$chassisSN = $this->_getChassisSerialNumber();
+		$baseboardSN = $this->_getBaseboardSerialNumber();
+		$systemSN = $this->_getSystemSerialNumber();
+		
+		if (($chassisSN == $baseboardSN) || ($chassisSN == $systemSN)) {
+			//Chassis serial number matches one of the other 2 serial numbers - let's use that
+			$this->serialNumber = $chassisSN;
+			$this->serialNumberType = 'chassis';
+			
+		} else {
+			//Chassis serial number did not match either of the other 2 so test to see if system serial does
+			if (($systemSN == $baseboardSN)) {
+				//System serial number matches baseboard so we will use that serial number
+				$this->serialNumber = $systemSN;
+				$this->serialNumberType = 'system';
+			} else {
+				//System serial number didn't match either but it is the most reliable so use it
+				$this->serialNumber = $systemSN;
+				$this->serialNumberType = 'default';
+			}
+		}		
+		
 	}
 	
 	protected function setSiteCode() {
@@ -116,38 +183,31 @@ class Machine {
 		$this->siteCode = $siteCode;
 	}
 	
-	protected function determineWipeStatus() {
+	
+	protected function setValidDriveCount() {
 		/*
-		 * This function will iterate through all hard drives in the machine to determine
-		 * are they A) valid and B) wiped. If so it will alter the status to make the Disk Wipe Status true.
+		 * This function will iterate through the hard drives in this machine and count the
+		 * number of drives that are valid (not belonging to the verification system)
 		 */
 		
-		// Set the variable that will be changed if a hard drive failed
-		$anyHardDriveFailed = false;
+		// Create a temporary variable to hold the counter
+		$tempValidCounter = 0;
 		
-		// Iterate through each hard drive instance defined in the machine
-		foreach ($this->hardDrives as $hardDrive) {
+		// Iterate through all defined drives
+		foreach ($this->hardDrives as $disk) {
 			
-			// Check to see if this drive is both valid and wiped
-			if ($hardDrive->getValidDisk() && $hardDrive->getWipeValidation()) {
-				
-				//Disk is both valid and wiped so continue throught the loop
-				continue;
-				
-			} elseif ($hardDrive->getValidDisk() && ! $hardDrive->getWipeValidation()) {
-				
-				// Hard drive was a valid drive but was not wiped so we change the flag to be a fail
-				$anyHardDriveFailed = true;
-			
+			//Check to see if the disk is valid
+			if ($disk->getValidDisk) {
+				//Disk is valid so increment the counter
+				$tempValidCounter++;
 			}
 		}
-
-		// Check to see if we made it through all iterations without a failed drive, if so change the machine verification to true
-		if (! $anyHardDriveFailed) {
-			$this->diskWipeStatus = true;
-		}
+		
+		//Assign temporary counter to the class property
+		$this->validDriveCount = $tempValidCounter;
 	}
 	
+		
 	protected function setHardDriveCount() {
 		/*
 		 * We will be determining the number of functional hard drives within the 
@@ -207,6 +267,52 @@ class Machine {
 		}
 	}
 	
+
+	protected function findHardDrives() {
+		/*
+		 * This function will find all of the active hard drives within the machine
+		 * and set the counter
+		 */
+		
+		// We are going to call the function that gets a hard drive count using basic linux commandline functions
+		$this->setHardDriveCount();
+		
+		// We are going to process the fdiskOutput array to create a new hardDrive class for each hard drive in the machine
+		$this->createHardDriveInstances();
+	}
+	
+	protected function determineWipeStatus() {
+		/*
+		 * This function will iterate through all hard drives in the machine to determine
+		 * are they A) valid and B) wiped. If so it will alter the status to make the Disk Wipe Status true.
+		 */
+		
+		// Set the variable that will be changed if a hard drive failed
+		$anyHardDriveFailed = false;
+		
+		// Iterate through each hard drive instance defined in the machine
+		foreach ($this->hardDrives as $hardDrive) {
+			
+			// Check to see if this drive is both valid and wiped
+			if ($hardDrive->getValidDisk() && $hardDrive->getWipeValidation()) {
+				
+				//Disk is both valid and wiped so continue throught the loop
+				continue;
+				
+			} elseif ($hardDrive->getValidDisk() && ! $hardDrive->getWipeValidation()) {
+				
+				// Hard drive was a valid drive but was not wiped so we change the flag to be a fail
+				$anyHardDriveFailed = true;
+			
+			}
+		}
+
+		// Check to see if we made it through all iterations without a failed drive, if so change the machine verification to true
+		if (! $anyHardDriveFailed) {
+			$this->diskWipeStatus = true;
+		}
+	}
+	
 	protected function createDrilledHardDrives() {
 		/*
 		 * This function will determine if this is a workstation or a server, and then generate 
@@ -246,6 +352,7 @@ class Machine {
 		}
 	}
 	
+	
 	protected function createHardDriveInstances() {
 		/*
 		 * This function is going to read the fdiskOutput and add an array entry that points to a new instance 
@@ -258,9 +365,10 @@ class Machine {
 			$tempHDIdentifier = $this->_cleanFdiskLine($disk);
 			
 			// We are going to now create a new instance of a hard drive and assign it to my class property
-			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier, $this->drillStatus);
+			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
 		}
 	}
+	
 	
 	private function _cleanFdiskLine($fdiskInput) {
 		/*
@@ -280,6 +388,7 @@ class Machine {
 		return $tempSingleInput;
 	}
 	
+	
 	private function _fdiskOutputCreation() {
 		/*
 		 * This function will use system commands to output the physical
@@ -288,5 +397,42 @@ class Machine {
 		exec('sudo fdisk -l | grep -e "^Disk /"', $this->fdiskOutput);	
 	}
 
+
+	private function _getSystemSerialNumber() {
+		/*
+		 * Here we will use the exec command to pull the system serial number and then
+		 * hand it back to the calling function
+		 */
+		
+		 exec('sudo dmidecode -s system-serial-number', $tempSerialNumber);
+		 
+		 //Shift the first array item off to the return value
+		 return array_shift($tempSerialNumber);
+	}
+	
+	private function _getBaseboardSerialNumber() {
+		/*
+		 * Here we will use the exec command to pull the baseboard serial number and then
+		 * hand it back to the calling function
+		 */
+		
+		 exec('sudo dmidecode -s baseboard-serial-number', $tempSerialNumber);
+		 
+		 //Shift the first array item off to the return value
+		 return array_shift($tempSerialNumber);
+		
+	}
+	
+	private function _getChassisSerialNumber() {
+		/*
+		 * Here we will use the exec command to pull the chassis serial number and then
+		 * hand it back to the calling function
+		 */
+		
+		 exec('sudo dmidecode -s chassis-serial-number', $tempSerialNumber);
+		 
+		 //Shift the first array item off to the return value
+		 return array_shift($tempSerialNumber);
+	}
 
 }

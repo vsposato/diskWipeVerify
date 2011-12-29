@@ -7,7 +7,7 @@ class HardDrive {
 	protected $diskSize = ''; //Completed
 	protected $partitionCount = 0; //Completed
 	protected $validDisk = false; //Completed
-	protected $wipeMethod = 'gdisk'
+	protected $wipeMethod = 'gdisk';
 	protected $wipeValidation = false; //Completed
 	protected $singleFdiskOutput = array(); //Completed
 	protected $singleHdparmOutput = array(); //Completed
@@ -18,11 +18,17 @@ class HardDrive {
 		 * This will be the construct process for the hard drive class,
 		 * and we will need to get all of the items setup
 		 */
+		
+		/* Define STDIN in case it wasn't defined somewhere else */
+		if (! defined("STDIN")) {
+			define("STDIN", fopen('php://stdin','r'));
+		}
+		
 		if (! $diskIdentifier ) {
 			/*
 			 * Failed to pass a valid disk identifier so fail
 			 */
-			exit;
+			die ('Something happened - no disk identifier passed to the hard drive creator!');
 		}
 		
 		if ($drill) {
@@ -32,16 +38,28 @@ class HardDrive {
 			 */
 
 			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
-			$this->setDiskIdentifier($diskIdentifier)
+			$this->setDiskIdentifier($diskIdentifier);
 			
+			// Set the wipeMethod class property for this hard drive
+			$this->setWipeMethod($drill);
+			
+			// Determine whether or not this is a valid disk
+			$this->setValidDisk();
+			
+			// Determined if the disk passes disk wipe validation
+			$this->setWipeValidation();
+		
 		} else {
 			/*
 			 * No drill flag, so we can proceed as normal
 			 */
 
 			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
-			$this->setDiskIdentifier($diskIdentifier)
+			$this->setDiskIdentifier($diskIdentifier);
 
+			// Set the wipeMethod class property for this hard drive
+			$this->setWipeMethod($drill);
+			
 			// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
 			$this->setSingleFdiskOutput();
 			
@@ -51,11 +69,16 @@ class HardDrive {
 			// Determine whether or not this is a valid disk
 			$this->setValidDisk();
 			
+			// Determined if the disk passes disk wipe validation
+			$this->setWipeValidation();
 		}
-		//@TODO Need to work here - all functions are complete - make sure the process gets done
-		
-		
-		// Determine whether or not the disk wipe was successful
+	}
+	
+	public function getDiskID() {
+		/*
+		 * This function returns the disk identifier for this hard drive
+		 */	
+		return $this->diskIdentifier;
 		
 	}
 	
@@ -76,6 +99,39 @@ class HardDrive {
 		return $this->wipeValidation;
 	}
 	
+	public function getSerialNumber() {
+		/*
+		 * This function returns the serial number of the hard drive
+		 */
+		
+		return $this->serialNumber;
+	}
+	
+	public function getWipeMethod() {
+		/*
+		 * This function returns the method used to wipe the hard drive
+		 */
+		
+		return $this->wipeMethod;
+	}
+	
+	protected function setWipeMethod($drill = false) {
+		/*
+		 * This function will set the wipe method of the hard drive instance
+		 */
+		
+		if ($drill) {
+			
+			// The drill flag is on so mark the hard drive as drilled
+			$this->wipeMethod = 'drill';
+			
+		} else {
+			
+			// The drill flag is off so mark the hard drive as gdisked (the default)
+			$this->wipeMethod = 'gdisk';
+		}
+	}
+	
 	protected function setDiskIdentifier($diskIdentifier) {
 		/*
 		 * This function will set the Disk Identifier that was handed into the 
@@ -83,30 +139,47 @@ class HardDrive {
 		 */
 		$this->diskIdentifier = $diskIdentifier;
 	}
-	
+		
 	protected function setSingleFdiskOutput() {
 		/*
 		 * Using a single disk identifier create the fdisk output
 		 * for the creation of the data for this single hard drive
 		 */
-		$command = "sudo fdisk {$this->diskIdentifier} -l | grep -e \"^/\"";
 		
-		exec($command, $this->singleFdiskOutput);
+		if ($this->wipeMethod == 'gdisk') {
+			// Create the hdparm command to be executed
+			$command = "sudo fdisk {$this->diskIdentifier} -l | grep -e \"^/\"";
+			
+			// Execute the command passing the output to class properties
+			exec($command, $this->singleFdiskOutput);
+			
+		} elseif ($this->wipeMethod == 'drill') {
+			
+			// This was a drill so set the fdisk class property to null
+			$this->singleFdiskOutput = null;
+		}
 	}
-	
+		
 	protected function setSingleHdparmOutput() {
 		/*
 		 * This function will generate the Hard Drive parameter information
 		 * for this hard drive instance
 		 */
 		
-		// Create the hdparm command to be executed
-		$command = "sudo hdparm -i {$this->diskIdentifier} | grep -e SerialNo=";
-		
-		// Execute the command passing the output and return to class properties
-		exec($command, $this->singleHdparmOutput,$this->singleHdparmReturn);
+		if ($this->wipeMethod == 'gdisk') {
+			// Create the hdparm command to be executed
+			$command = "sudo hdparm -i {$this->diskIdentifier} | grep -e SerialNo=";
+			
+			// Execute the command passing the output and return to class properties
+			exec($command, $this->singleHdparmOutput,$this->singleHdparmReturn);
+		} elseif ($this->wipeMethod == 'drill') {
+			
+			// This was a drill so set the hdparm class properties to null
+			$this->singleHdparmOutput = null;
+			$this->singleHdparmReturn = null;
+		}
 	}
-
+	
 	protected function setPartitionCount() {
 		/*
 		 * This function will use the fdisk output generated previously
@@ -195,24 +268,33 @@ class HardDrive {
 			/*$this->validDisk = false;
 		}*/
 
-		if (! isset($this->singleHdparmOutput)) {
+		if ( $this->wipeMethod == 'gdisk' ) {
 			
-			//No hdparm output detected so call the method to generate it
-			$this->setSingleHdparmOutput();
-		
-		}
-		
-		if ($this->singleHdparmReturn == 0) {
-			/*
-			 * HDPARM returned a value so this is a valid disk to be reviewed
-			 */
+			// This is a normal gdisked hard drive so we can handle the valid disk through normal means
+			
+			if (! isset($this->singleHdparmOutput)) {
+				
+				//No hdparm output detected so call the method to generate it
+				$this->setSingleHdparmOutput();
+			
+			}
+			
+			if ($this->singleHdparmReturn == 0) {
+				/*
+				 * HDPARM returned a value so this is a valid disk to be reviewed
+				 */
+				$this->validDisk = true;
+			} else {
+				/*
+				 * HDPARM returned an error therefore it is most likely a USB / CD bootable disk
+				 * so we will make this a non-valid disk for purpose of disk wipe
+				 */
+				$this->validDisk = false;
+			}
+		} elseif ( $this->wipeMethod == 'drill' ) {
+
+			// This drive was drilled and therefore not present to have this determination made so is automatically considered valid
 			$this->validDisk = true;
-		} else {
-			/*
-			 * HDPARM returned an error therefore it is most likely a USB / CD bootable disk
-			 * so we will make this a non-valid disk for purpose of disk wipe
-			 */
-			$this->validDisk = false;
 		}
 	}
 	
@@ -256,28 +338,42 @@ class HardDrive {
 				}
 			} 
 		}*/ 
-		
-		// Set a temporary array to hold the exploded identification line
-		$identification = explode(",",$this->singleHdparmOutput);
-		
-		// After the explode the Serial Number is stored in the 3rd array index
-		$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
+
+		if ($this->wipeMethod == 'gdisk') {
+			// Set a temporary array to hold the exploded identification line
+			$identification = explode(",",$this->singleHdparmOutput);
+			
+			// After the explode the Serial Number is stored in the 3rd array index
+			$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
+		} elseif ($this->wipeMethod == 'drill' {
+			/*
+			 * Drill flag was passed into the function so we will need to prompt for a serial number
+			 */
+			do {
+				$driveSerial = $this->__getDrilledHardDriveSerialNumber();
+			} while ($driveSerial != false);
+			
+			// Assign the confirmed serial number to the instance class property
+			$this->serialNumber = $driveSerial;
+		}
 	}
 	
-	protected function setWipeValidation($drill = false) {
+	protected function setWipeValidation() {
 		/*
 		 * This function will determine the disk wipe status based upon the partition count class property.
 		 * A hard drive that has been wiped should have 0 partitions. Any partition count other than 0,
 		 * will result in a negative disk wipe status
 		 */
 		
-		if ($drill) {
+		if ($this->wipeMethod == 'drill') {
 			
 			/*
-			 * Drill flag was passed into the function so we will need to prompt for a serial number
+			 * Drill flag was passed into the function so we will just mark the wipe as being validated
 			 */
 			
-		} else {
+			$this->wipeValidation = true;
+
+		} elseif ($this->wipeMethod == 'gdisk') {
 
 			/*
 			 * Drill flag was not passed in so we will follow the normal procedures for 
@@ -343,6 +439,30 @@ class HardDrive {
 		return $temp_hd_size[0];
 	}
 	
-	
-	
+	private function _getDrilledHardDriveSerialNumber() {
+		/*
+		 * This function will read stdin to get the serial number of the hard drive that was drilled
+		 */		
+		
+		//Get the serial number from the user
+		echo "What is the serial number of the drilled hard drive? \n";
+		$inputSerial = fgets(STDIN);
+
+		do {
+			//Loop until the user enters a y or a n to determine if the hard drive was drilled
+			echo "The serial number of the hard drive you drilled is {$inputSerial}. Is this correct? [Y / N] \n";
+			do {
+				//Get a single character from the STDIN
+				$answer = fgetc(STDIN);
+			} while ( trim($answer) == '');
+		} while (upper($answer) != 'Y' && upper($answer) !='N');
+		
+		if (upper($answer) == 'Y') {
+			// The user confirmed the hard drive serial so return it
+			return $inputSerial;
+		} elseif (upper($answer)) == 'N') {
+			// The user did not confirm the hard drive serial so start over
+			return false;
+		}
+	}
 }
