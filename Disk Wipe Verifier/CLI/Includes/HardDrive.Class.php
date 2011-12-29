@@ -7,12 +7,13 @@ class HardDrive {
 	protected $diskSize = ''; //Completed
 	protected $partitionCount = 0; //Completed
 	protected $validDisk = false; //Completed
+	protected $wipeMethod = 'gdisk'
 	protected $wipeValidation = false; //Completed
 	protected $singleFdiskOutput = array(); //Completed
 	protected $singleHdparmOutput = array(); //Completed
 	protected $singleHdparmReturn = ''; //Completed
 	
-	public function __construct($diskIdentifier) {
+	public function __construct($diskIdentifier, $drill = false) {
 		/*
 		 * This will be the construct process for the hard drive class,
 		 * and we will need to get all of the items setup
@@ -23,24 +24,38 @@ class HardDrive {
 			 */
 			exit;
 		}
+		
+		if ($drill) {
+			/*
+			 * The instance was passed the drilled hard drive(s) flag so we need to determine 
+			 * a little more information
+			 */
+
+			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
+			$this->setDiskIdentifier($diskIdentifier)
+			
+		} else {
+			/*
+			 * No drill flag, so we can proceed as normal
+			 */
+
+			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
+			$this->setDiskIdentifier($diskIdentifier)
+
+			// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
+			$this->setSingleFdiskOutput();
+			
+			// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
+			$this->setSingleHdparmOutput();
+			
+			// Determine whether or not this is a valid disk
+			$this->setValidDisk();
+			
+		}
 		//@TODO Need to work here - all functions are complete - make sure the process gets done
-		// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
-		$this->setDiskIdentifier($diskIdentifier)
 		
-		// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
-		$this->setSingleFdiskOutput();
-		
-		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
-		$this->setSingleHdparmOutput();
-		
-		// Determine whether or not this is a valid disk
-		$this->setValidDisk();
 		
 		// Determine whether or not the disk wipe was successful
-		
-	}
-	
-	public function toString() {
 		
 	}
 	
@@ -67,28 +82,6 @@ class HardDrive {
 		 * class
 		 */
 		$this->diskIdentifier = $diskIdentifier;
-	}
-	
-	private function _cleanHDIdentification($HDIdentification) {
-		//This function will take the model, firmware and serial and return them without
-		//the beginning entry
-		
-		//The standard is an = sign so break out from there
-		$temp_hd_info = explode('=',$HDIdentification);
-		
-		//Return the 2nd index of the array returned which will hold the important information
-		return $temp_hd_info[1];
-	}
-	
-	private function _cleanHDSize($HDSize) {
-		//This function will remove the , from the sizing information returned
-		//from the fdisk function
-		
-		//The standard separator for the hard drive size is a comma
-		$temp_hd_size = explode(',', $HDSize);
-		
-		//Return the 1st array entry as this will house the friendly size
-		return $temp_hd_size[0];
 	}
 	
 	protected function setSingleFdiskOutput() {
@@ -271,21 +264,36 @@ class HardDrive {
 		$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
 	}
 	
-	protected function setWipeValidation() {
+	protected function setWipeValidation($drill = false) {
 		/*
 		 * This function will determine the disk wipe status based upon the partition count class property.
 		 * A hard drive that has been wiped should have 0 partitions. Any partition count other than 0,
 		 * will result in a negative disk wipe status
 		 */
 		
-		// Check the partition count to determine if it is 0
-		if ($this->partitionCount === 0) {
+		if ($drill) {
 			
-			// There are no partitions so this is a successful wipe
-			$this->wipeValidation = true;
+			/*
+			 * Drill flag was passed into the function so we will need to prompt for a serial number
+			 */
+			
+		} else {
+
+			/*
+			 * Drill flag was not passed in so we will follow the normal procedures for 
+			 * checking 
+			 */
+			// Check the partition count to determine if it is 0
+			if ($this->partitionCount === 0) {
+				
+				// There are no partitions so this is a successful wipe
+				$this->wipeValidation = true;
+				
+			}
 			
 		}
 	}
+	
 	protected function setDiskSize() {
 		/*
 		 * This function will use the fdisk output to parse through and 
@@ -312,6 +320,29 @@ class HardDrive {
 			}
 		}
 	}
+	
+	private function _cleanHDIdentification($HDIdentification) {
+		//This function will take the model, firmware and serial and return them without
+		//the beginning entry
+		
+		//The standard is an = sign so break out from there
+		$temp_hd_info = explode('=',$HDIdentification);
+		
+		//Return the 2nd index of the array returned which will hold the important information
+		return $temp_hd_info[1];
+	}
+	
+	private function _cleanHDSize($HDSize) {
+		//This function will remove the , from the sizing information returned
+		//from the fdisk function
+		
+		//The standard separator for the hard drive size is a comma
+		$temp_hd_size = explode(',', $HDSize);
+		
+		//Return the 1st array entry as this will house the friendly size
+		return $temp_hd_size[0];
+	}
+	
 	
 	
 }

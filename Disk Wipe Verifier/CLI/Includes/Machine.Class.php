@@ -11,11 +11,10 @@ class Machine {
 	protected $serialNumber = '';
 	protected $serialNumberType = '';
 	protected $hardDriveCount = 0;
-	protected $validHardDriveCount = 0;
 	protected $hardDrives = array();
 	protected $fdiskOutput = array();
 	protected $diskWipeStatus = false;
-	public $transmitInformation = array();
+	protected $drillStatus = false;
 	
 	public function __construct() {
 		/*
@@ -37,10 +36,37 @@ class Machine {
 	}
 	
 	public function getDiskWipeStatus() {
+		/*
+		 * This will return the Disk Wipe Status of the machine
+		 */		
+		
+		return $this->diskWipeStatus;
+	}
+	
+	public function getHardDrives() {
+		/*
+		 * This function will iterate through all hard drives in the hardDrives array
+		 * and return a well-formed array of the valid hard drives. By valid we are referring
+		 * to hard drives that are not part of the verification system
+		 */
+		
+		// Create temporary array to be returned 
+		foreach ($this->hardDrives as $disk) {
+			
+		}
+	}
+	
+	public function getSiteCode() {
 		
 	}
 	
-	public function 
+	public function getSerialNumber() {
+		
+	}
+	
+	public function getWipeStatus() {
+		
+	}
 	
 	protected function findHardDrives() {
 		/*
@@ -140,6 +166,84 @@ class Machine {
 		// We are going to use the count of the fdiskOutput array to give us the number of hard drives
 		// since the exec command that we used was specific to lines that output harddrives
 		$this->hardDriveCount = count($this->fdiskOutput);
+		
+		/*
+		 * If the hard drive count is 1, then we have encountered a drilling situation so we need
+		 * to set the drill flag for this machine
+		 */
+		if ($this->hardDriveCount === 1) {
+			/*
+			 * We found only one hard drive so we need to set the drill status class property
+			 */
+			$this->setDrillStatus();
+		}	
+	}
+	
+	protected function setDrillStatus() {
+		/*
+		 * This function will determine if this is a true drill situation, and then create
+		 * the number of hard drives required
+		 */
+		
+		echo "We only detected one hard drive, did you drill the drives for this machine? (Y / N) \n";
+		do {
+			//Loop until the user enters a y or a n to determine if the hard drive was drilled
+			do {
+				//Get a single character from the STDIN
+				$answer = fgetc(STDIN);
+			} while ( trim($answer) == '');
+		} while (upper($answer) != 'Y' && upper($answer) !='N');
+	
+		// Test to determine if this is a drill situation
+		if (upper($answer) == 'Y') {
+			// The user says this is a drill situation so we are going set the status to true
+			$this->drillStatus = true;
+			
+			// Now we are going to call the drilled hard drives creator
+			$this->createDrilledHardDrives;
+		} else {
+			// The user says this is not a drill situation so kill the program because something is wrong
+			die('Shutdown the machine, check all cable connections, make sure hard drive is functioning, and re-run this process!');
+		}
+	}
+	
+	protected function createDrilledHardDrives() {
+		/*
+		 * This function will determine if this is a workstation or a server, and then generate 
+		 * the count of hard drives for that machine with the drill flag set for each of them
+		 */
+		
+		echo "Is this machine a [S]erver or a [W]orkstation? (S / W) \n";
+		do {
+			//Loop until the user enters a y or a n to determine if the hard drive was drilled
+			do {
+				//Get a single character from the STDIN
+				$answer = fgetc(STDIN);
+			} while ( trim($answer) == '');
+		} while (upper($answer) != 'S' && upper($answer) !='W');
+		
+		if (upper($answer) == 'S') {
+			/*
+			 * This is a server so we will need to generate 4 hard drives for drilling
+			 */
+			
+			
+			//Build an array for the disk identifiers to be used for the hard drives
+			$serverDiskIdentifiers = ("/dev/sda","/dev/sdb","/dev/sdc","/dev/sdd");
+			
+			foreach ($serverDiskIdentifiers as $disk) {
+				
+				//Create a new instance for each of the hard drives that were drilled
+				$this->hardDrives[$disk] = new HardDrive($disk,$this->drillStatus);
+			}
+		} else {
+			/*
+			 * This is a workstation so we will need to generate 1 hard drive for drilling
+			 */
+			
+			//Since there is only one hard drive just pass string literals to the function
+			$this->hardDrives["/dev/sda"] = new HardDrive("/dev/sda",$this->drillStatus);
+		}
 	}
 	
 	protected function createHardDriveInstances() {
@@ -148,12 +252,13 @@ class Machine {
 		 * of the hard drive class
 		 */	
 		
+		//We didn't drill the hard drives so continue the process
 		foreach ($this->fdiskOutput as $disk) {
 			// We are going to process each row of disk data to create new hard drive instances
 			$tempHDIdentifier = $this->_cleanFdiskLine($disk);
 			
 			// We are going to now create a new instance of a hard drive and assign it to my class property
-			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
+			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier, $this->drillStatus);
 		}
 	}
 	
@@ -173,33 +278,6 @@ class Machine {
 		$tempSingleInput = substr($tempFdiskInput[0],5);
 
 		return $tempSingleInput;
-	}
-	
-	private function _validHardDrives() {
-		/*
-		 * This function will parse the fdisk data to get a valid hard drive
-		 * count from the information provided back
-		 */
-		
-		$hardDriveCounter = 0;
-		
-		
-		foreach ($this->fdiskOutput as $data) {
-			/*
-			 * Let's work through each individual line looking for disk
-			 * entries or the partition runs
-			 */
-			if ($disk_entry === FALSE) {
-				/*
-				 * Not a physical disk entry so we can simply continue on to the next line
-				 */
-				continue;
-			} elseif ($disk_entry !== FALSE) {
-				//We found the Disk string inside of the data line so we are going to increment the counter
-				$hardDriveCounter++;				
-			}
-		}
-		return $hardDriveCounter;		
 	}
 	
 	private function _fdiskOutputCreation() {
