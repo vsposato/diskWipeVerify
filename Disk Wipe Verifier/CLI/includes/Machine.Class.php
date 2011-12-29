@@ -23,6 +23,13 @@ class Machine {
 		 * class properities that can be filled in
 		 */
 		
+		/* 
+		 * Define global variables required to perform functions
+		 */
+		global $logFile;
+		
+		WriteToLogFile("Machine Class", "Instantiate", $logFile);
+		
 		/* Define STDIN in case it wasn't defined somewhere else */
 		if (! defined("STDIN")) {
 			define("STDIN", fopen('php://stdin','r'));
@@ -31,11 +38,9 @@ class Machine {
 		// Import the Hard Drive class
 		require_once('HardDrive.Class.php');
 		
-		// We will use the class function to determine the site code for this machine
-		$this->setSiteCode();
-		
 		// We will now get the hard drive information and create new hard drives for each drive in this machine
 		$this->findHardDrives();
+		WriteToLogFile("Machine Class", "Finished Finding Hard Drives", $logFile);
 		
 		// We are now going to determine if all valid hard drives have been wiped and therefore the machine has passed
 		$this->determineWipeStatus();
@@ -148,41 +153,6 @@ class Machine {
 		
 	}
 	
-	protected function setSiteCode() {
-		//Present the user with a prompt to get the sort code of the site we are at
-		echo "What sort code are you at? (enter below): \n";
-		while (($siteCode.length != 7) && (Is_Numeric($siteCode))) {
-			$siteCode = fgets(STDIN);
-		}
-		//Lets confirm that the user really meant that sort code
-		echo "{$siteCode} - are you sure? (yes / no) \n";
-		
-		//Here we are going to run an input loop to confirm that the user really meant
-		//this sort code
-		do {
-			//Read 4 characters from the keyboard
-			$answer = fgets(STDIN);
-			
-			//Trim the response and convert it to upper
-			$answer = trim(strtoupper($answer));
-			
-			//Check to see if the user said either yes or no
-			if (($answer != "YES") AND ($answer != "NO")) {
-				// You must enter YES or NO, nothing else
-				// The user said something other than yes or no so loop
-				echo "Are you at sort code {$siteCode}? \n";
-				echo "You must enter either yes or no! \n";
-			}
-		} while (($answer != "YES")  AND ($answer != "NO"));
-
-		//The loop exited because the user said yes or no, 
-		//if he said no then take him back into the function
-		if ($answer == "NO") {
-			$this->setSiteCode;
-		} 
-		$this->siteCode = $siteCode;
-	}
-		
 	protected function setValidDriveCount() {
 		/*
 		 * This function will iterate through the hard drives in this machine and count the
@@ -213,7 +183,7 @@ class Machine {
 		 */
 		
 		// We need to make sure that the fdisk array has already been setup, and if not we will run the function to set it up
-		if (! isset($this->fdiskOutput)) {
+		if (! empty($this->fdiskOutput)) {
 			/*
 			 * There currently is nothing in the fdisk output array so we will need to call the function
 			 * to create the data
@@ -250,10 +220,10 @@ class Machine {
 				//Get a single character from the STDIN
 				$answer = fgetc(STDIN);
 			} while ( trim($answer) == '');
-		} while (upper($answer) != 'Y' && upper($answer) !='N');
+		} while (strtoupper($answer) != 'Y' && strtoupper($answer) !='N');
 	
 		// Test to determine if this is a drill situation
-		if (upper($answer) == 'Y') {
+		if (strtoupper($answer) == 'Y') {
 			// The user says this is a drill situation so we are going set the status to true
 			$this->drillStatus = true;
 			
@@ -323,16 +293,16 @@ class Machine {
 				//Get a single character from the STDIN
 				$answer = fgetc(STDIN);
 			} while ( trim($answer) == '');
-		} while (upper($answer) != 'S' && upper($answer) !='W');
+		} while (strtoupper($answer) != 'S' && strtoupper($answer) !='W');
 		
-		if (upper($answer) == 'S') {
+		if (strtoupper($answer) == 'S') {
 			/*
 			 * This is a server so we will need to generate 4 hard drives for drilling
 			 */
 			
 			
 			//Build an array for the disk identifiers to be used for the hard drives
-			$serverDiskIdentifiers = ("/dev/sda","/dev/sdb","/dev/sdc","/dev/sdd");
+			$serverDiskIdentifiers = array("/dev/sda","/dev/sdb","/dev/sdc","/dev/sdd");
 			
 			foreach ($serverDiskIdentifiers as $disk) {
 				
@@ -390,7 +360,6 @@ class Machine {
 		 */
 		exec('sudo fdisk -l | grep -e "^Disk /"', $this->fdiskOutput);	
 	}
-
 
 	private function _getSystemSerialNumber() {
 		/*

@@ -18,6 +18,12 @@ class HardDrive {
 		 * This will be the construct process for the hard drive class,
 		 * and we will need to get all of the items setup
 		 */
+
+		/* 
+		 * Define global variables required to perform functions
+		 */
+		global $logFile;
+		
 		
 		/* Define STDIN in case it wasn't defined somewhere else */
 		if (! defined("STDIN")) {
@@ -321,7 +327,7 @@ class HardDrive {
 			
 			// After the explode the Serial Number is stored in the 3rd array index
 			$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
-		} elseif ($this->wipeMethod == 'drill' {
+		} elseif ($this->wipeMethod == 'drill') {
 			/*
 			 * Drill flag was passed into the function so we will need to prompt for a serial number
 			 */
@@ -436,7 +442,7 @@ class HardDrive {
 		if (upper($answer) == 'Y') {
 			// The user confirmed the hard drive serial so return it
 			return $inputSerial;
-		} elseif (upper($answer)) == 'N') {
+		} elseif (upper($answer) == 'N') {
 			// The user did not confirm the hard drive serial so start over
 			return false;
 		}

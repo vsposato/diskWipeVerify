@@ -175,6 +175,43 @@
 		//Return the array back to the calling function
 		return $display_array;
 	}
+
+	function setSortCode() {
+		//Present the user with a prompt to get the sort code of the site we are at
+		global $sortCode;
+		
+		echo "What sort code are you at? (enter below): \n";
+		do{
+			$sortCode = trim(fgets(STDIN));
+		}while (!preg_match('/^\d{7}$/',$sortCode));
+		
+		//Lets confirm that the user really meant that sort code
+		echo "{$sortCode} - are you sure? (yes / no) \n";
+		
+		//Here we are going to run an input loop to confirm that the user really meant
+		//this sort code
+		do {
+			//Read 4 characters from the keyboard
+			$answer = fgets(STDIN);
+			
+			//Trim the response and convert it to upper
+			$answer = trim(strtoupper($answer));
+			
+			//Check to see if the user said either yes or no
+			if (($answer != "YES") AND ($answer != "NO")) {
+				// You must enter YES or NO, nothing else
+				// The user said something other than yes or no so loop
+				echo "Are you at sort code {$sortCode}? \n";
+				echo "You must enter either yes or no! \n";
+			}
+		} while (($answer != "YES")  AND ($answer != "NO"));
+
+		//The loop exited because the user said yes or no, 
+		//if he said no then take him back into the function
+		if ($answer == "NO") {
+			setSortCode;
+		} 
+	}
 	
 /*
  * End of File: general_functions.php

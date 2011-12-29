@@ -1,6 +1,13 @@
 <?php
 
 	/*
+	 * Set some global variables for use throughout
+	 */
+	global $sortCode = '';
+	global $logFile;
+
+
+	/*
 	 * Implement the PEAR package for XML_RPC for communication with the backend server
 	 */
 	require_once('XML/RPC.php');
@@ -11,7 +18,7 @@
 	 */
 	require_once('includes/general_functions.php');
 	require_once('includes/asterisk_functions.php');
-	require_once('includes/logging_functions.php')
+	require_once('includes/logging_functions.php');
 	
 	/*
 	 * Include the machine class so that it can be instantiated later
@@ -40,6 +47,20 @@
 
 	// Clear the screen
 	passthru('reset');
+	
+	// Get the site code
+	setSiteCode();
+
+	//Create the logfile to capture all the data
+	if (! createLogFile() ) {
+		//Log File failed to be created
+		echo "Log file couldn't be opened - aborting!";
+		exit;
+	}
+	
+	//Show the user that we have started the data gathering process
+	echo "Parsing data for sort code - {$sortCode} \n";
+	writeToLogFile("Parsing Begin", "Parsing data for sort code - {$sortCode}", $logFile);
 	
 	// Create a new machine
 	$checkWorkstation = new Machine();
