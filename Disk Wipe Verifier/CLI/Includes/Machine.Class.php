@@ -182,8 +182,7 @@ class Machine {
 		} 
 		$this->siteCode = $siteCode;
 	}
-	
-	
+		
 	protected function setValidDriveCount() {
 		/*
 		 * This function will iterate through the hard drives in this machine and count the
@@ -206,8 +205,7 @@ class Machine {
 		//Assign temporary counter to the class property
 		$this->validDriveCount = $tempValidCounter;
 	}
-	
-		
+			
 	protected function setHardDriveCount() {
 		/*
 		 * We will be determining the number of functional hard drives within the 
@@ -267,7 +265,6 @@ class Machine {
 		}
 	}
 	
-
 	protected function findHardDrives() {
 		/*
 		 * This function will find all of the active hard drives within the machine
@@ -351,8 +348,7 @@ class Machine {
 			$this->hardDrives["/dev/sda"] = new HardDrive("/dev/sda",$this->drillStatus);
 		}
 	}
-	
-	
+		
 	protected function createHardDriveInstances() {
 		/*
 		 * This function is going to read the fdiskOutput and add an array entry that points to a new instance 
@@ -368,8 +364,7 @@ class Machine {
 			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
 		}
 	}
-	
-	
+		
 	private function _cleanFdiskLine($fdiskInput) {
 		/*
 		 * This function will take a single line of output from fdisk and break it down to return the 
@@ -387,8 +382,7 @@ class Machine {
 
 		return $tempSingleInput;
 	}
-	
-	
+		
 	private function _fdiskOutputCreation() {
 		/*
 		 * This function will use system commands to output the physical
@@ -436,3 +430,9 @@ class Machine {
 	}
 
 }
+
+/*
+ * End of File: Machine.Class.php
+ * Class: Machine
+ * File: ./includes/Machine.Class.php
+ */

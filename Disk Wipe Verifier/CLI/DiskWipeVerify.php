@@ -1,1 +1,54 @@
 <?php
+
+	/*
+	 * Implement the PEAR package for XML_RPC for communication with the backend server
+	 */
+	require_once('XML/RPC.php');
+	
+	/*
+	 * Implement the general_functions, asterisk_functions, and logging_functions for use throughout 
+	 * the process.
+	 */
+	require_once('includes/general_functions.php');
+	require_once('includes/asterisk_functions.php');
+	require_once('includes/logging_functions.php')
+	
+	/*
+	 * Include the machine class so that it can be instantiated later
+	 */
+	require_once('includes/Machine.Class.php');
+	
+	//Set the timezone
+	date_default_timezone_set("America/New_York");
+	
+	/* Define STDIN in case it wasn't defined somewhere else */
+	if (! defined("STDIN")) {
+		define("STDIN", fopen('php://stdin','r'));
+	}
+	
+	/*
+	 * Define the values that are needed for the XML client connection
+	 */
+	define("xml_path", "dwv_xmlserver");
+	define("xml_server", "diskwipe.nettechconsultants.com");
+	define("xml_port", 80);
+	define("xml_proxy", NULL);
+	define("xml_proxy_port", NULL);
+	define("xml_proxy_user", NULL);
+	define("xml_proxy_pass", NULL);
+
+
+	// Clear the screen
+	passthru('reset');
+	
+	// Create a new machine
+	$checkWorkstation = new Machine();
+	
+	// Dump the object to the screen
+	var_dump($checkWorkstation);
+
+/*
+ * End of File: DiskWipeVerify.php
+ * Class: Main (No Class)
+ * File: DiskWipeVerify.php
+ */

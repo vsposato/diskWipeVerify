@@ -31,47 +31,23 @@ class HardDrive {
 			die ('Something happened - no disk identifier passed to the hard drive creator!');
 		}
 		
-		if ($drill) {
-			/*
-			 * The instance was passed the drilled hard drive(s) flag so we need to determine 
-			 * a little more information
-			 */
-
-			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
-			$this->setDiskIdentifier($diskIdentifier);
-			
-			// Set the wipeMethod class property for this hard drive
-			$this->setWipeMethod($drill);
-			
-			// Determine whether or not this is a valid disk
-			$this->setValidDisk();
-			
-			// Determined if the disk passes disk wipe validation
-			$this->setWipeValidation();
+		// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
+		$this->setDiskIdentifier($diskIdentifier);
 		
-		} else {
-			/*
-			 * No drill flag, so we can proceed as normal
-			 */
-
-			// Set the Disk Identifier class property based upon the Disk Identifier sent into the constructor
-			$this->setDiskIdentifier($diskIdentifier);
-
-			// Set the wipeMethod class property for this hard drive
-			$this->setWipeMethod($drill);
-			
-			// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
-			$this->setSingleFdiskOutput();
-			
-			// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
-			$this->setSingleHdparmOutput();
-			
-			// Determine whether or not this is a valid disk
-			$this->setValidDisk();
-			
-			// Determined if the disk passes disk wipe validation
-			$this->setWipeValidation();
-		}
+		// Set the wipeMethod class property for this hard drive
+		$this->setWipeMethod($drill);
+		
+		// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
+		$this->setSingleFdiskOutput();
+		
+		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
+		$this->setSingleHdparmOutput();
+		
+		// Determine whether or not this is a valid disk
+		$this->setValidDisk();
+		
+		// Determined if the disk passes disk wipe validation
+		$this->setWipeValidation();
 	}
 	
 	public function getDiskID() {
@@ -466,3 +442,9 @@ class HardDrive {
 		}
 	}
 }
+
+/*
+ * End of File: HardDrive.Class.php
+ * Class: HardDrive
+ * File: ./includes/HardDrive.Class.php
+ */
