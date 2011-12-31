@@ -127,6 +127,10 @@ class Machine {
 		return $this->diskWipeStatus;
 	}
 
+	public function getValidDriveCount() {
+		
+	}
+	
 	protected function setSerialNumber() {
 		/*
 		 * This function will gather the 3 BIOS available serial numbers and then compare to determine
@@ -262,6 +266,10 @@ class Machine {
 		
 		// We are going to process the fdiskOutput array to create a new hardDrive class for each hard drive in the machine
 		$this->createHardDriveInstances();
+
+		// Now we have built the hard drives so we can count the valid hard drives
+		$this->setValidDriveCount();
+				
 	}
 	
 	protected function determineWipeStatus() {
