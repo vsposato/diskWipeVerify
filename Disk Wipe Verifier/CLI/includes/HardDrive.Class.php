@@ -52,14 +52,14 @@ class HardDrive {
 		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
 		$this->setSingleHdparmOutput();
 		
+		// Determine whether or not this is a valid disk
+		$this->setValidDisk();
+		
 		// Set the hard drive serial number
 		$this->setDiskSerialNumber();
 		
 		// Set the partition count for this hard drive
 		$this->setPartitionCount();
-		
-		// Determine whether or not this is a valid disk
-		$this->setValidDisk();
 		
 		// Determined if the disk passes disk wipe validation
 		$this->setWipeValidation();
@@ -294,25 +294,41 @@ class HardDrive {
 		 * serial information from the physical disk and return it.
 		 */
 
-		writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+		writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin - singleHdparmOutput={$this->singleHdparmOutput[0]}  validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 
 		if ($this->wipeMethod == 'gdisk') {
 
-			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if wipeMethod gdisk - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if wipeMethod gdisk - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 			
-			// Set a temporary array to hold the exploded identification line
-			$identification = explode(",", $this->singleHdparmOutput[0]);
+			if ($this->validDisk) {
+				// This is a valid disk, so we can get the serial number through the normal process
+				writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if validDisk true - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+				
+				// Set a temporary array to hold the exploded identification line
+				$identification = explode(",", $this->singleHdparmOutput[0]);
+	
+				// After the explode the Serial Number is stored in the 3rd array index
+				$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
 
-			// After the explode the Serial Number is stored in the 3rd array index
-			$this->serialNumber = $this->_cleanHDIdentification($identification[2]);
-			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end if wipeMethod gdisk - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+				writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end if validDisk true - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+			} else {
+				// This is not a valid disk, and therefore there is no way to get a serial number from this disk
+				writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if validDisk false - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+				
+				// Set value to 10 zero's 
+				$this->serialNumber = '0000000000';
+				
+				writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if validDisk false - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+				
+			}
+			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end if wipeMethod gdisk - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 			
 		} elseif ($this->wipeMethod == 'drill') {
 			/*
 			 * Drill flag was passed into the function so we will need to prompt for a serial number
 			 */
 			
-			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if wipeMethod drill - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if wipeMethod drill - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 			
 			do {
 				$driveSerial = $this->__getDrilledHardDriveSerialNumber();
@@ -321,9 +337,9 @@ class HardDrive {
 			// Assign the confirmed serial number to the instance class property
 			$this->serialNumber = $driveSerial;
 			
-			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end if wipeMethod drill - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end if wipeMethod drill - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 		}
-		writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
+		writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - end - singleHdparmOutput={$this->singleHdparmOutput[0]} serialNumber={$this->serialNumber} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
 	}
 	
 	protected function setWipeValidation() {
