@@ -69,7 +69,7 @@
 	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);
 
 	// Close the log file
-	closeLogFile($logFile);
+	closeLogFile($logFile, $checkWorkstation->getSerialNumber());
 	
 /*
  * End of File: DiskWipeVerify.php

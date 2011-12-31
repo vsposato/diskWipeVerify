@@ -117,7 +117,7 @@
 		return FALSE;
 	}
 
-	function closeLogFile($logFile) {
+	function closeLogFile($logFile, $serialNumber) {
 		/*
 		 * This function will close the log file and rename it 
 		 * to the appropriate name SerialNumber-YYYY-MM-DD-HH-MM.txt
@@ -125,13 +125,12 @@
 		 */
 		
 		global $logFile;
-		global $validation_array;
 		global $sortCode;
 
 		//Determine the path that we will be using
 		$path = getLogFilePath($sortCode);
 		
-		$newFileName = $path . $validation_array['machine_serial'] . '-' . date("Y-m-d-H-i", time()) . '.txt';
+		$newFileName = $path . $serialNumber . '-' . date("Y-m-d-H-i", time()) . '.txt';
 		
 		fclose($logFile);
 		
