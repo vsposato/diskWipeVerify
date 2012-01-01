@@ -71,7 +71,7 @@ class Machine {
 		$tempHardDriveArray = array("disks" => array("count" => $this->validDriveCount));
 		
 		foreach ($this->hardDrives as $disk) {
-			if ($disk->getValidDisk) {
+			if ($disk->getValidDisk()) {
 				//This is a valid disk so build the array
 				
 				//Add the serial number
@@ -188,7 +188,7 @@ class Machine {
 		foreach ($this->hardDrives as $disk) {
 			
 			//Check to see if the disk is valid
-			if ($disk->getValidDisk) {
+			if ($disk->getValidDisk()) {
 				//Disk is valid so increment the counter
 				$tempValidCounter++;
 			}
