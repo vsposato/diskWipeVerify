@@ -13,7 +13,7 @@ class Machine {
 	protected $validDriveCount = 0;
 	protected $hardDrives = array();
 	protected $fdiskOutput = array();
-	protected $diskWipeStatus = false;
+	protected $diskWipeStatus = 'FAILED';
 	protected $drillStatus = false;
 	protected $logFile = '';
 	
@@ -45,6 +45,7 @@ class Machine {
 		
 		// We will now get the hard drive information and create new hard drives for each drive in this machine
 		$this->findHardDrives();
+
 		writeToLogFile("Machine Class ", "Finished Finding Hard Drives", $this->logFile);
 		
 		// We are now going to determine if all valid hard drives have been wiped and therefore the machine has passed
@@ -74,13 +75,13 @@ class Machine {
 				//This is a valid disk so build the array
 				
 				//Add the serial number
-				$tempHardDriveArray["disks"][$disk->getDiskID()]["serial"] = $disk->getSerialNumber();
+				$tempHardDriveArray[$disk->getDiskID()]["serial"] = $disk->getSerialNumber();
 				
 				//Add the wipemethod
-				$tempHardDriveArray["disks"][$disk->getDiskID()]["wipemethod"] = $disk->getWipeMethod();
+				$tempHardDriveArray[$disk->getDiskID()]["wipemethod"] = $disk->getWipeMethod();
 				
 				//Add the wipe status
-				$tempHardDriveArray["disks"][$disk->getDiskID()]["wipestatus"] = $disk->getWipeValidation();
+				$tempHardDriveArray[$disk->getDiskID()]["wipestatus"] = $disk->getWipeValidation();
 				
 			} else {
 				
@@ -119,16 +120,28 @@ class Machine {
 		return $this->serialNumberType;
 	}
 	
-	public function getWipeStatus() {
-		/*
-		 * This function will return the wipe status of the machine (all hard drives wiped or not)
-		 */	
-		
-		return $this->diskWipeStatus;
-	}
-
 	public function getValidDriveCount() {
+		/*
+		 * This function will return the class property validDriveCount
+		 */
 		
+		return $this->validDriveCount;
+	}
+	
+	public function getDiskWipeMethod() {
+		/*
+		 * This function will use the $drillStatus class property to determine if we drilled
+		 * or gdisked the machine
+		 */
+		
+		if ($this->drillStatus) {
+			// We drilled this machine so return DRILLED
+			return 'DRILLED';
+			
+		} elseif (! $this->drillStatus) {
+			//We gdisked this machine so return GDISKED
+			return 'GDISKED';
+		}
 	}
 	
 	protected function setSerialNumber() {
@@ -300,7 +313,7 @@ class Machine {
 
 		// Check to see if we made it through all iterations without a failed drive, if so change the machine verification to true
 		if (! $anyHardDriveFailed) {
-			$this->diskWipeStatus = true;
+			$this->diskWipeStatus = 'PASSED';
 		}
 	}
 	

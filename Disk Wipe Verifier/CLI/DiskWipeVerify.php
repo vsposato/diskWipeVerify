@@ -65,6 +65,13 @@
 	// Create a new machine
 	$checkWorkstation = new Machine();
 	
+	//Get the display message to be sent to the screen
+	$display_array = verifyDiskWipe();	
+
+	//Now display the message on the screen
+	displayNormalMessage($display_array);
+
+	
 	// Dump the object to the screen
 	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);
 

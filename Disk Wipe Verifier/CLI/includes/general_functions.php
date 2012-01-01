@@ -45,7 +45,7 @@
 		global $logFile;
 		
 		//Check to determine whether or not overall verification failed
-		if ($display_array['FullDiskWipeVerify'] == 'FAILED') {
+		if ($display_array['wipe_status'] == 'FAILED') {
 			//Overall verification failed so display the failure in asterisks
 			displayAsteriskMessage("FAIL FAIL");
 			//Write to the log file
@@ -83,12 +83,12 @@
 					continue;
 				}
 			}
-		} elseif ($display_array['FullDiskWipeVerify'] == 'PASSED') {
+		} elseif ($display_array['wipe_status'] == 'PASSED') {
 			//Write to the log file
 			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
 			//Let's loop through the array and start displaying values
 			foreach ($display_array as $key => $value) {
-				if (stripos($key, "DiskNo_") !== FALSE) {
+				if (stripos($key, "/dev/") !== FALSE) {
 					//Start building the display line with the disk code
 					$displayLine = "Disk Code: {$key} \n";
 					//Let's loop through the Disk Sub-Array
@@ -118,60 +118,27 @@
 		 * This function will take the information gathered and determine whether or
 		 * not the disk wipe validation passed or failed
 		 */
-		global $validation_array;
-		global $disk_array;
-		global $partition_array;
-		global $size_array;
-		global $num_of_disks;
-		
-		//Set the default disk wipe to be true - only change if it actually fails
-		$diskWipeVerified = 'PASSED';
+		global $checkWorkstation;
+		global $sortCode;
 		
 		//This is the array that will hold just the display information
 		$display_array = array();
 		
 		//Set the Sort Code
-		$display_array['sort_code'] = $validation_array['sort_code'];
+		$display_array['sort_code'] = $sortCode;
 		
 		//Set the machine serial number
-		$display_array['machine_serial'] = $validation_array['machine_serial'];
+		$display_array['machine_serial'] = $checkWorkstation->getSerialNumber();
 		
-		if ($num_of_disks > 0) {
-			/*
-			 * There are disks available in the machine so let's parse to see 
-			 * which ones are physical disks
-			 */
-			for ($i = 1; $i <= $num_of_disks; $i++) {
-				//Count through each disk to determine
-				//Does this disk contain the string for a failed HDParm meaning it is our USB Drive
-
-				if ((stripos($validation_array['disks'][$i]['disk_model'],'Unknown (USB?)')) === FALSE) {
-					//This is a valid disk so we will pass back the information
-					$diskID = 'DiskNo_' . $i;
-					//Hand the serial number from the original validation array
-					$display_array[$diskID]['SerialNumber'] = $validation_array['disks'][$i]['disk_serial'];
-					//Hand the disk size from the original validation array
-					$display_array[$diskID]['disk_size'] = $validation_array['disks'][$i]['disk_size'];
-					//Hand the partition count from the original validation array
-					$display_array[$diskID]['PartitionCount'] = $validation_array['disks'][$i]['disk_part_count'];
-					//Validate if there are any partitions on the disk - then G-Disk failed on this disk
-					$display_array[$diskID]['DiskWipeVerify'] = ($display_array[$diskID]['PartitionCount'] > 0) ? 'FAILED' : 'PASSED';
-					//If the Gdisk failed on this disk, then update overall verification to FALSE
-					if ($display_array[$diskID]['DiskWipeVerify'] === "FAILED") {
-						$diskWipeVerified = 'FAILED';
-					}
-				}
-			}
-			
-			$display_array['FullDiskWipeVerify'] = ($diskWipeVerified == 'FAILED') ? 'FAILED' : 'PASSED';
-			
-		} else {
-			
-			//No disks were found in the machine so we are going to return false so an error can be handled
-			return FALSE;
-			
-		}
+		// Set the machine wipe status
+		$display_array['wipe_status'] = $checkWorkstation->getDiskWipeStatus();
 		
+		// Set the disk wipe method
+		$display_array['wipe_method'] = $checkWorkstation->getDiskWipeMethod();
+		
+		//Gather the hard drive information from the machine class
+		$display_array['disks'] = $checkWorkstation->getHardDrives();
+				
 		//Return the array back to the calling function
 		return $display_array;
 	}
