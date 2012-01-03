@@ -56,15 +56,21 @@
 			//Let's loop through the array and start displaying values
 			foreach ($display_array as $key => $value) {
 				
-				if (stripos($key, "DiskNo_") !== FALSE) {
-					//Start building the display line with the disk code
-					$displayLine = "Disk Code: {$key} \n";
+				if (stripos($key, "disks") !== FALSE) {
 					//Let's loop through the Disk Sub-Array
+
 					foreach ($value as $subKey => $subValue) {
-						//Add each disk subkey to the current line and display the value
-						$displayLine .= "     {$subKey} = {$subValue} \n";
+						
+						// We are now in side the disks sub-array so let's get the first key
+						
+						foreach ($value as $subKey2 => $subValue2) {
+							//Start building the display line with the disk code
+							$displayLine = "Disk Code: {$key} \n";
+							//Add each disk subkey to the current line and display the value
+							$displayLine .= "     {$subKey} = {$subValue} \n";
+						}
+						
 					}
-					
 					//Display the line on the screen
 					echo $displayLine;
 					
@@ -88,7 +94,7 @@
 			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
 			//Let's loop through the array and start displaying values
 			foreach ($display_array as $key => $value) {
-				if (stripos($key, "/dev/") !== FALSE) {
+				if (stripos($key, "disks") !== FALSE) {
 					//Start building the display line with the disk code
 					$displayLine = "Disk Code: {$key} \n";
 					//Let's loop through the Disk Sub-Array
@@ -135,6 +141,9 @@
 		
 		// Set the disk wipe method
 		$display_array['wipe_method'] = $checkWorkstation->getDiskWipeMethod();
+		
+		// Set the number of hard drives
+		$display_array['disk_count'] = $checkWorkstation->getValidDriveCount();
 		
 		//Gather the hard drive information from the machine class
 		$display_array['disks'] = $checkWorkstation->getHardDrives();

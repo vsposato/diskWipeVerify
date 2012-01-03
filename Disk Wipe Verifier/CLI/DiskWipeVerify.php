@@ -71,6 +71,8 @@
 	//Now display the message on the screen
 	displayNormalMessage($display_array);
 
+	// Dump the display array
+	print_r($display_array);
 	
 	// Dump the object to the screen
 	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);

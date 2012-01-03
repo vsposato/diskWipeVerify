@@ -68,7 +68,7 @@ class Machine {
 		 */
 		
 		// Create temporary array to be returned
-		$tempHardDriveArray = array("disks" => array("count" => $this->validDriveCount));
+		$tempHardDriveArray = array();
 		
 		foreach ($this->hardDrives as $disk) {
 			if ($disk->getValidDisk()) {
