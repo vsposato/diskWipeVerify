@@ -45,10 +45,14 @@
 
 		// Define some variables here
 		$indent = '   ';
+		$indentPrint = '';
 		
-		// Add the appropriate amount of indents to the indentPrint - controls the hierarchy display
-		for ($a = 1; $a == $level; $a++ ) {
-			$indentPrint .= $indent;			
+		// Check to see if we are on a different level than 0, as 0 is the base level so no indent
+		if ($level > 0) {
+			// Add the appropriate amount of indents to the indentPrint - controls the hierarchy display
+			for ($a = 0; $a === $level; $a++ ) {
+				$indentPrint = $indentPrint . $indent;			
+			}
 		}
 		
 		// Loop through the iterator until the valid method no longer returns true
