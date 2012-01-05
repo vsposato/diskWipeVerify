@@ -46,22 +46,24 @@
 		// Define some variables here
 		$indent = '   ';
 		
-		for ($a = 1; $a == ($level - 1); $a++ ) {
-			$indent .= $indent;			
+		// Add the appropriate amount of indents to the indentPrint - controls the hierarchy display
+		for ($a = 1; $a == $level; $a++ ) {
+			$indentPrint .= $indent;			
 		}
+		
 		// Loop through the iterator until the valid method no longer returns true
 		while ($iterator->valid()) {
 			
 			// Check to see if the value provided is an array
 			if ($iterator->hasChildren()) {
 				// This key has an array in it, so we need to make this a heading
-				echo $indent . $iterator->key() . PHP_EOL;
-				echo $indent . '-------------------' . PHP_EOL;
+				echo $indentPrint . $iterator->key() . PHP_EOL;
+				echo $indentPrint . '-------------------' . PHP_EOL;
 				// Now re-call the function with an incremented level
 				traverseArray($iterator->getChildren(), $level++);
 			} else {
 				//This has does not have an array in it, so just echo out the information
-				echo $indent . $iterator->key() . ' = ' . $iterator->current() . PHP_EOL;
+				echo $indentPrint . $iterator->key() . ' = ' . $iterator->current() . PHP_EOL;
 			}
 			// Go to next item in the array iterator
 			$iterator->next();
@@ -91,70 +93,22 @@
 			$displayIterator = new RecursiveArrayIterator($display_array);
 			
 			// Apply the iterator to the newly created iterator
-			iterator_apply($displayIterator, 'traverseArray', array($displayIterator));
+			iterator_apply($displayIterator, 'traverseArray', array($displayIterator, 0));
 			
-			//Let's loop through the array and start displaying values
-			/*foreach ($display_array as $key => $value) {
-				
-				if (stripos($key, "disks") !== FALSE) {
-					//Let's loop through the Disk Sub-Array
-
-					foreach ($value as $subKey => $subValue) {
-						
-						// We are now in side the disks sub-array so let's get the first key
-						
-						foreach ($value as $subKey2 => $subValue2) {
-							//Start building the display line with the disk code
-							$displayLine = "Disk Code: {$key} \n";
-							//Add each disk subkey to the current line and display the value
-							$displayLine .= "     {$subKey} = {$subValue} \n";
-						}
-						
-					}
-					//Display the line on the screen
-					echo $displayLine;
-					
-					//Continue the foreach loop
-					continue;
-					
-				} else {
-					
-					//This isn't a disk so just display the key value pair
-					$displayLine = "{$key} = {$value} \n";
-					
-					//Display the line on the screen
-					echo $displayLine;
-					
-					//Continue the foreach loop
-					continue;
-				}
-			}*/
 		} elseif ($display_array['wipe_status'] == 'PASSED') {
-			//Write to the log file
+
+			//Write to the log file a passed message
 			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
-			//Let's loop through the array and start displaying values
-			foreach ($display_array as $key => $value) {
-				if (stripos($key, "disks") !== FALSE) {
-					//Start building the display line with the disk code
-					$displayLine = "Disk Code: {$key} \n";
-					//Let's loop through the Disk Sub-Array
-					foreach ($value as $subKey => $subValue) {
-						//Add each disk subkey to the current line and display the value
-						$displayLine .= "     {$subKey} = {$subValue}\n";
-					}
-					//Display the line on the screen
-					echo $displayLine;
-					//Continue the foreach loop
-					continue;
-				} else {
-					//This isn't a disk so just display the key value pair
-					$displayLine = "{$key} = {$value} \n";
-					//Display the line on the screen
-					echo $displayLine;
-					//Continue the foreach loop
-					continue;
-				}
-			}
+			
+			// Create a new instance of the Recursive Array Iterator
+			$displayIterator = new RecursiveArrayIterator($display_array);
+			
+			// Apply the iterator to the newly created iterator
+			iterator_apply($displayIterator, 'traverseArray', array($displayIterator, 0));
+
+			echo "\n";
+			
+			// Since this was a passed Gdisk - we need to display the Serial Number in big letters
 			displayAsteriskMessage($display_array['machine_serial']);
 		}
 	}
