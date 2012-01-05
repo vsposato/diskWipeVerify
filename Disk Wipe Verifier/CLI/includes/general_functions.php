@@ -37,6 +37,38 @@
 		return $message;
 	}
 
+	function traverseArray($iterator, $level = 0) {
+		/*
+		 * This function will utilize the RecursiveArrayIterator class from PHP to work through the entire array
+		 * provided. The function takes an iterator object as it's input
+		 */	
+
+		// Define some variables here
+		$indent = '   ';
+		
+		for ($a = 1; $a == ($level - 1); $a++ ) {
+			$indent .= $indent;			
+		}
+		// Loop through the iterator until the valid method no longer returns true
+		while ($iterator->valid()) {
+			
+			// Check to see if the value provided is an array
+			if ($iterator->hasChildren()) {
+				// This key has an array in it, so we need to make this a heading
+				echo $indent . $iterator->key() . PHP_EOL;
+				echo $indent . '-------------------' . PHP_EOL;
+				// Now re-call the function with an incremented level
+				traverseArray($iterator->getChildren(), $level++);
+			} else {
+				//This has does not have an array in it, so just echo out the information
+				echo $indent . $iterator->key() . ' = ' . $iterator->current() . PHP_EOL;
+			}
+			// Go to next item in the array iterator
+			$iterator->next();
+		}
+	}
+	
+	
 	function displayNormalMessage($display_array) {
 		/*
 		 * This function will take an array input and display it on the screen using normal characters
@@ -46,15 +78,23 @@
 		
 		//Check to determine whether or not overall verification failed
 		if ($display_array['wipe_status'] == 'FAILED') {
+
 			//Overall verification failed so display the failure in asterisks
 			displayAsteriskMessage("FAIL FAIL");
+
 			//Write to the log file
 			writeToLogFile("Overall Verification Failed", "1 or more disks had active partitions", $logFile);
 			
 			echo "\n";
 			
+			// Create a new instance of the Recursive Array Iterator
+			$displayIterator = new RecursiveArrayIterator($display_array);
+			
+			// Apply the iterator to the newly created iterator
+			iterator_apply($displayIterator, 'traverseArray', array($displayIterator));
+			
 			//Let's loop through the array and start displaying values
-			foreach ($display_array as $key => $value) {
+			/*foreach ($display_array as $key => $value) {
 				
 				if (stripos($key, "disks") !== FALSE) {
 					//Let's loop through the Disk Sub-Array
@@ -88,7 +128,7 @@
 					//Continue the foreach loop
 					continue;
 				}
-			}
+			}*/
 		} elseif ($display_array['wipe_status'] == 'PASSED') {
 			//Write to the log file
 			writeToLogFile("Overall Verification Passed", "No disks had active partitions", $logFile);
