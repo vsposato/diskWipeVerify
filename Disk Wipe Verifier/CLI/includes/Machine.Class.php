@@ -81,7 +81,7 @@ class Machine {
 				$tempHardDriveArray[$disk->getDiskID()]["wipemethod"] = $disk->getWipeMethod();
 				
 				//Add the wipe status
-				$tempHardDriveArray[$disk->getDiskID()]["wipestatus"] = $disk->getWipeValidation();
+				$tempHardDriveArray[$disk->getDiskID()]["wipestatus"] = ($disk->getWipeValidation()) ? 'WIPED' : 'FAILED';
 				
 			} else {
 				
