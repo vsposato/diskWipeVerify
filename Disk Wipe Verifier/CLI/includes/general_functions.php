@@ -44,16 +44,7 @@
 		 */	
 
 		// Define some variables here
-		$indent = '   ';
-		$indentPrint = '';
-		
-		// Check to see if we are on a different level than 0, as 0 is the base level so no indent
-		if ($level > 0) {
-			// Add the appropriate amount of indents to the indentPrint - controls the hierarchy display
-			for ($a = 0; $a === $level; $a++ ) {
-				$indentPrint = $indentPrint . $indent;			
-			}
-		}
+		$indentPrint = str_repeat("   ", $level);
 		
 		// Loop through the iterator until the valid method no longer returns true
 		while ($iterator->valid()) {
@@ -62,9 +53,8 @@
 			if ($iterator->hasChildren()) {
 				// This key has an array in it, so we need to make this a heading
 				echo $indentPrint . $iterator->key() . PHP_EOL;
-				echo $indentPrint . '-------------------' . PHP_EOL;
 				// Now re-call the function with an incremented level
-				traverseArray($iterator->getChildren(), $level++);
+				traverseArray($iterator->getChildren(), ++$level);
 			} else {
 				//This has does not have an array in it, so just echo out the information
 				echo $indentPrint . $iterator->key() . ' = ' . $iterator->current() . PHP_EOL;
