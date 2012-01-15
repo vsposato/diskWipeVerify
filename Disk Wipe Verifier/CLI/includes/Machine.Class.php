@@ -108,7 +108,7 @@ class Machine {
 		return $this->siteCode;
 	}
 	
-	public funciton getLiveCD() {
+	public function getLiveCD() {
 		/*
 		 * This function will return the value of the liveCD class property
 		 */
@@ -169,6 +169,7 @@ class Machine {
 		// Since the return should only be 1 element then we will shift off the only value to the class property
 		$this->hostname = array_shift($tempHostname);
 	}
+	
 	protected function setLiveCD() {
 		/*
 		 * This function will take the host name of this machine and validate whether we are using a 
@@ -280,17 +281,24 @@ class Machine {
 		writeToLogFile("Machine Class ", "setHardDriveCount - after assignment hardDriveCount={$this->hardDriveCount}", $this->logFile);
 		
 		/*
-		 * If the hard drive count is 1, then we have encountered a drilling situation so we need
-		 * to set the drill flag for this machine
+		 * If the hardDriveCount is 1 AND the liveCD is false, then we have encountered a drilling situation, also if the hardDriveCount is 0
+		 * AND the liveCD is true we have encountered a drilling situation
 		 */
-		if ($this->hardDriveCount === 1) {
+		if (($this->hardDriveCount === 1) && ($this->getLiveCD() === false)) {
 			/*
 			 * We found only one hard drive so we need to set the drill status class property
 			 */
 			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $this->logFile);
 			
 			$this->setDrillStatus();
-		}	
+
+		} elseif (($this->hardDriveCount === 0) && ($this->getLiveCD() === true)) {
+			
+			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $this->logFile);
+			
+			$this->setDrillStatus();
+			
+		}
 	}
 	
 	protected function setDrillStatus() {
