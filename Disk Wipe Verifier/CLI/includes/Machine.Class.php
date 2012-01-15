@@ -14,6 +14,8 @@ class Machine {
 	protected $hardDrives = array();
 	protected $fdiskOutput = array();
 	protected $diskWipeStatus = 'FAILED';
+	protected $hostname = '';
+	protected $liveCD = false;
 	protected $drillStatus = false;
 	protected $logFile = '';
 	
@@ -42,6 +44,9 @@ class Machine {
 		
 		// We will need to set the serial number of the machine
 		$this->setSerialNumber();
+		
+		// We will need to determine the system verification type - either livecd or liveusb
+		$this->setLiveCD();
 		
 		// We will now get the hard drive information and create new hard drives for each drive in this machine
 		$this->findHardDrives();
@@ -103,6 +108,14 @@ class Machine {
 		return $this->siteCode;
 	}
 	
+	public funciton getLiveCD() {
+		/*
+		 * This function will return the value of the liveCD class property
+		 */
+		
+		return $this->liveCD;
+		
+	}
 	public function getSerialNumber() {
 		/*
 		 * This function will return the serial number found by the 
@@ -142,6 +155,46 @@ class Machine {
 			//We gdisked this machine so return GDISKED
 			return 'GDISKED';
 		}
+	}
+	
+	protected function setHostname() {
+		/*
+		 * This function will use the uname function to gather the hostname of the verification system
+		 * and then set the class property with it
+		 */
+		
+		// Execute uname function and hand off return data to tempHostname
+		exec('uname -n', $tempHostname);
+		
+		// Since the return should only be 1 element then we will shift off the only value to the class property
+		$this->hostname = array_shift($tempHostname);
+	}
+	protected function setLiveCD() {
+		/*
+		 * This function will take the host name of this machine and validate whether we are using a 
+		 * live CD or a live USB drive.
+		 */
+		
+		// Check to make sure the hostname is populated
+		if (empty($this->hostname)) {
+			
+			// It shouldn't be empty, so call the setting method
+			$this->setHostname();
+		}
+		
+		// Test the hostname to see whether it is a liveCD or a liveUSB
+		if ($this->hostname === 'diskwipecd') {
+			
+			// The hostname for a live cd is diskwipecd so set liveCD to true
+			$this->liveCD = true;
+			
+		} elseif ($this->hostname === 'diskwipeusb') {
+			
+			// The hostname for a live usb is diskwipeusb so set liveCD to false
+			$this->liveUSB = false;
+			
+		}
+		
 	}
 	
 	protected function setSerialNumber() {
