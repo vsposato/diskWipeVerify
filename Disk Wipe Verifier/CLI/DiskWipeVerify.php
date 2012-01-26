@@ -71,22 +71,24 @@
 	//Now display the message on the screen
 	displayNormalMessage($validation_array);
 
+	createXMLFromArray($validation_array);
+	
 	/*
 	 * Initialize our RPC client object pasing in all appropriate variables
 	 */
-	$client = new XML_RPC_Client(xml_path, xml_server, xml_port, xml_proxy, xml_proxy_port, xml_proxy_user, xml_proxy_pass);
+	//$client = new XML_RPC_Client(xml_path, xml_server, xml_port, xml_proxy, xml_proxy_port, xml_proxy_user, xml_proxy_pass);
 	/*
 	 * Turn on debugging
 	 */
-	$client->setDebug(1);
+	//$client->setDebug(1);
 	/*
 	 * Create a response object to catch the information returning from the XML_RPC
 	 * 
 	 */
-	$response = $client->send(buildXMLRPCMessage($validation_array));
+	//$response = $client->send(buildXMLRPCMessage($validation_array));
 	
 	// Dump the display array
-	print_r($validation_array);
+	//print_r($validation_array);
 	
 	// Dump the object to the screen
 	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);

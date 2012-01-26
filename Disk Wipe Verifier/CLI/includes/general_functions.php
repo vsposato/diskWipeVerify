@@ -1,5 +1,22 @@
 <?php
 
+	function createXMLFromArray($displayArray) {
+		/*
+		 * This will take the display array and turn it into well-formed XML
+		 * following the HP POST standard
+		 */
+		
+		// Create a new SimpleXMLElement
+		$xmlDocument = new SimpleXMLElement("<?xml version='1.0' encoding='UTF-8'>");
+		
+		$diskwipeinfo = $xmlDocument->addChild("diskwipeinfo");
+		$diskwipeinfo->addAttribute("diskcount", $displayArray['disk_count']);
+		
+		echo $xmlDocument->asXML();
+		
+			
+	}
+
 	function multi_array_key_exists($needle, $haystack) {
 		foreach ($haystack as $key=>$value) {
 			if ($needle===$key) {
