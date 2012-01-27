@@ -37,7 +37,7 @@
 	 * Define the values that are needed for the XML client connection
 	 */
 	define("xml_path", "dwv_xmlserver");
-	define("xml_server", "www.nettechconsultants.com");
+	define("xml_server", "http://h41354.www4.hp.com/PMOPost/_webservices/DiskWipeImport.ashx");
 	define("xml_port", 80);
 	define("xml_proxy", NULL);
 	define("xml_proxy_port", NULL);
