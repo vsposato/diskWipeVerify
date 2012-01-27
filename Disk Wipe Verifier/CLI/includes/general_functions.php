@@ -6,15 +6,65 @@
 		 * following the HP POST standard
 		 */
 		
+		// Create base XML string
+		$xmlString = <<<XML
+		<diskwipeinfo></diskwipeinfo>
+XML;
+		
 		// Create a new SimpleXMLElement
-		$xmlDocument = new SimpleXMLElement("<?xml version='1.0' encoding='UTF-8'>");
+		$xmlDocument = simplexml_load_string($xmlString);
+		$xmlDocument->addAttribute("diskcount", $displayArray['disk_count']);
+		$xmlDocument->addAttribute("serialnumber", $displayArray['machine_serial']);
+		$xmlDocument->addAttribute("sortcode", $displayArray['sort_code']);
+		$xmlDocument->addAttribute("wipe_status", $displayArray['wipe_status']);
+		$xmlDocument->addAttribute("wipe_method", $displayArray['wipe_method']);
 		
-		$diskwipeinfo = $xmlDocument->addChild("diskwipeinfo");
-		$diskwipeinfo->addAttribute("diskcount", $displayArray['disk_count']);
+		$disksInformation = $xmlDocument->addChild("disks");
 		
-		echo $xmlDocument->asXML();
+		foreach ($displayArray[disks] as $key=>$disk) {
+			$individualDisk = $disksInformation->addChild("disk");
+			$individualDisk->addAttribute("id",$key);
+			$individualDisk->addAttribute("wipe_method",$disk['wipemethod']);
+			$individualDisk->addAttribute("wipe_status",$disk['wipestatus']);
+			$individualDisk->addAttribute("sn",$disk['serial']);
+		}
+
+		
+		return preg_replace('/version="1.0"/','version="1.0" encoding="UTF-8"',$xmlDocument->asXML());
 		
 			
+	}
+	
+	function transmitXMLMessageToPOST($xmlMessage, $postURL) {
+		/*
+		 * This will take a pre-formed XML Message and transmit the file via cURL to 
+		 * HP's POST system
+		 */
+		
+		// This will initiate a cURL session with POST
+		$curlHandle = curl_init();
+		$contentType = array('Content-Type: text/xml');
+
+		// Set the options for our CURL handler
+		curl_setopt($curlHandle, CURLOPT_URL, $postURL);				// Set the URL for HP's POST
+		curl_setopt($curlHandle, CURLOPT_FORBID_REUSE, true);			// Force cURL to close session and not allow reuse
+		curl_setopt($curlHandle, CURLOPT_POST, true);					// Force regular POST to the URL
+		curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);			// Return return value of curl_exec() as a string instead of outputting it
+		curl_setopt($curlHandle, CURLOPT_UPLOAD, true);					// Prepare for an upload
+		curl_setopt($curlHandle, CURLOPT_CONNECTTIMEOUT, 60);			// Set the connection timeout to be 60 secs
+		curl_setopt($curlHandle, CURLOPT_TIMEOUT, 180);					// Set the process timeout to be 180 secs
+		curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $xmlMessage);		// Set the POST fields to be the xmlMessage that was handed in
+		curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $contentType);		// Set the content type to be XML
+		
+		// Submit the cURL request and capture the response
+		$postResponse = curl_exec($curlHandle);
+		
+		// Close the cURL handler
+		curl_close($curlHandle);
+			
+		// Pass the response back to the calling function
+		return $postResponse;
+		
 	}
 
 	function multi_array_key_exists($needle, $haystack) {
@@ -80,7 +130,6 @@
 			$iterator->next();
 		}
 	}
-	
 	
 	function displayNormalMessage($display_array) {
 		/*

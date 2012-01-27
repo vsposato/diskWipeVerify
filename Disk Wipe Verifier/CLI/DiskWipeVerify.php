@@ -37,7 +37,7 @@
 	 * Define the values that are needed for the XML client connection
 	 */
 	define("xml_path", "dwv_xmlserver");
-	define("xml_server", "diskwipe.nettechconsultants.com");
+	define("xml_server", "www.nettechconsultants.com");
 	define("xml_port", 80);
 	define("xml_proxy", NULL);
 	define("xml_proxy_port", NULL);
@@ -71,8 +71,13 @@
 	//Now display the message on the screen
 	displayNormalMessage($validation_array);
 
-	createXMLFromArray($validation_array);
+	// Turn the validation array into well-formed XML to hand off
+	$message = createXMLFromArray($validation_array);
 	
+	// Call the Transmission function
+	$response = transmitXMLMessageToPOST($message,xml_server);
+	
+	var_dump($response);
 	/*
 	 * Initialize our RPC client object pasing in all appropriate variables
 	 */
@@ -85,13 +90,13 @@
 	 * Create a response object to catch the information returning from the XML_RPC
 	 * 
 	 */
-	//$response = $client->send(buildXMLRPCMessage($validation_array));
+	//$response = $client->send(buildXMLRPCMessage($message));
 	
 	// Dump the display array
 	//print_r($validation_array);
 	
 	// Dump the object to the screen
-	writeToLogFile("Main Script ",var_dump($checkWorkstation),$logFile);
+	writeToLogFile("Main Script ",objectToArray($checkWorkstation),$logFile);
 
 	// Close the log file
 	closeLogFile($logFile, $checkWorkstation->getSerialNumber());
