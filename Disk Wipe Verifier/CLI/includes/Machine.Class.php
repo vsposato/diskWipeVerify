@@ -432,15 +432,17 @@ class Machine {
 		
 		writeToLogFile("Machine Class ", "createHardDriveInstances - begin", $this->logFile);
 		
-		//We didn't drill the hard drives so continue the process
-		foreach ($this->fdiskOutput as $disk) {
-			// We are going to process each row of disk data to create new hard drive instances
-			$tempHDIdentifier = $this->_cleanFdiskLine($disk);
-			
-			writeToLogFile("Machine Class ", "createHardDriveInstances - inside foreach tempHDIdentifier={$tempHDIdentifier}", $this->logFile);
-			
-			// We are going to now create a new instance of a hard drive and assign it to my class property
-			$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
+		if ($this->drillStatus === false) {
+			//We didn't drill the hard drives so continue the process
+			foreach ($this->fdiskOutput as $disk) {
+				// We are going to process each row of disk data to create new hard drive instances
+				$tempHDIdentifier = $this->_cleanFdiskLine($disk);
+				
+				writeToLogFile("Machine Class ", "createHardDriveInstances - inside foreach tempHDIdentifier={$tempHDIdentifier}", $this->logFile);
+				
+				// We are going to now create a new instance of a hard drive and assign it to my class property
+				$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
+			}
 		}
 	}
 		
