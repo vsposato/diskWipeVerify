@@ -405,8 +405,8 @@ class HardDrive {
 		echo "What is the serial number of the drilled hard drive? \n";
 		do{
 			$inputSerial = trim(fgets(STDIN));
-		}while (is_null($inputSerial));
-			
+		}while ($inputSerial = '');
+
 		do {
 			//Loop until the user enters a y or a n to determine if the hard drive was drilled
 			echo "The serial number of the hard drive you drilled is {$inputSerial}. Is this correct? [Y / N] \n";

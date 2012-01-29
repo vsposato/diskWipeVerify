@@ -197,8 +197,8 @@ class Machine {
 		} else {
 
 			// The host name is neither the defaults for a liveUSB or liveCD so we are going to assume that 
-			// this is some other situation still not live CD
-			$this->liveCD = false;
+			// this is some other situation like testing
+			$this->liveCD = true;
 	
 		}
 		

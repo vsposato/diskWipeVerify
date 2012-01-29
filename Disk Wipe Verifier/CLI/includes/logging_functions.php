@@ -12,10 +12,13 @@
 		if( stripos($oldWorkingDirectory, $sortCode) === FALSE) {
 			//We didn't find the sort code in the current working directory
 			//Attempt to change directory to the sortCode directory
-			if(! chdir($sortCode)) {
-				//It didn't work so the directory needs to be created - with wide open permissions
+			if(! is_dir($sortCode)) {
+				//It isn't an existing directory so it needs to be created - with wide open permissions
 				mkdir($sortCode, 0777);
 				//Now change directory to the sortCode directory
+				chdir($sortCode);
+			} else {
+				// It is a directory so all we need to do is change the directory
 				chdir($sortCode);
 			}
 		}
