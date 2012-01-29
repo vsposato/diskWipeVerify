@@ -116,6 +116,7 @@ class Machine {
 		return $this->liveCD;
 		
 	}
+	
 	public function getSerialNumber() {
 		/*
 		 * This function will return the serial number found by the 
