@@ -94,12 +94,13 @@ XML;
 		$tempIPInformation = array();
 		
 		// Run ifconfig and first grep out the lines with inet addr, and then of those lines the ones that are not localhost, and then break them into IP addresses only
-		exec('sudo ifconfig | grep -c "inet addr" | grep -v "127.0.0.1" | grep -o "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"', $tempIPInformation);
+		exec('sudo ifconfig | grep "inet addr" | grep -v "127.0.0.1" | grep -o "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"', $tempIPInformation);
 		
 		// We know from experience with ifconfig that the first IP address will be the one we want
 		return $tempIPInformation[0];
 		
 	}
+	
 	function multi_array_key_exists($needle, $haystack) {
 		foreach ($haystack as $key=>$value) {
 			if ($needle===$key) {
