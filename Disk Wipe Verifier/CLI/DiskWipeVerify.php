@@ -37,6 +37,15 @@
 	// Clear the screen
 	passthru('reset');
 	
+	// Here we will test to see if we have connectivity
+	if (checkInternetConnectivity() === true) {
+		// We have internet connectivity so display the IP Address
+		echo displayIPAddress() . "\n";
+	} elseif (checkInternetConnectivity() === false) {
+		// We do not have internet connectivity check to see if the person knows
+		confirmInternetConnectivityFailed();
+	}
+	
 	// Get the site code
 	setSortCode();
 

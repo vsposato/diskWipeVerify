@@ -65,7 +65,41 @@ XML;
 		return $postResponse;
 		
 	}
+	
+	function checkInternetConnectivity() {
+		/*
+		 * This function will use a grep of the ifconfig output to determine how many IP addresses are available.
+		 * We know from experience that 1 IP address means that it is 127.0.0.1 only, and therefore not on the internet.
+		 * However, we will display active IP addresses if they exist
+		 */
+		
+		$tempIPInformation = array();
+		
+		exec('sudo ifconfig | grep -c "inet addr"', $tempIPInformation);
+		
+		if ($tempIPInformation[0] > 1) {
+			return true;
+		} elseif ($tempIPInformation[0] <= 1) {
+			return false;
+		}
+	}
 
+	function displayIPAddress() {
+		/*
+		 * This function will strip out the IP Address of the machine for display on screen.
+		 * This will be for troubleshooting purposes only, and not really for anything else.
+		 */
+		
+		// Setup an empty array to capture the data from the ifconfig command
+		$tempIPInformation = array();
+		
+		// Run ifconfig and first grep out the lines with inet addr, and then of those lines the ones that are not localhost, and then break them into IP addresses only
+		exec('sudo ifconfig | grep -c "inet addr" | grep -v "127.0.0.1" | grep -o "[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}"', $tempIPInformation);
+		
+		// We know from experience with ifconfig that the first IP address will be the one we want
+		return $tempIPInformation[0];
+		
+	}
 	function multi_array_key_exists($needle, $haystack) {
 		foreach ($haystack as $key=>$value) {
 			if ($needle===$key) {
@@ -192,6 +226,54 @@ XML;
 		return $display_array;
 	}
 
+	function confirmInternetConnectivityFailed() {
+		/*
+		 * This function will be called by the primary routine only if the internet connectivity
+		 * test failed. We will basically be letting the technician know that there is no internet
+		 * connectivity, and he needs to confirm.
+		 */
+		
+		echo "You currently do not have a valid IP address. If you have been instructed to work in offline mode \n";
+		echo "please confirm by typing 'yes' at the prompt. Otherwise, type 'no' and we will shutdown and allow \n";
+		echo "you to check your network connectivity. \n";
+		echo "Are you sure you want to operate in offline mode? [yes / no] \n";
+
+		//Here we are going to run an input loop to confirm that the user really meant
+		//this sort code
+		do {
+			//Read 4 characters from the keyboard
+			$answer = fgets(STDIN);
+				
+			//Trim the response and convert it to upper
+			$answer = trim(strtoupper($answer));
+				
+			//Check to see if the user said either yes or no
+			if (($answer != "YES") AND ($answer != "NO")) {
+				// You must enter YES or NO, nothing else
+				// The user said something other than yes or no so loop
+				echo "Are you sure you want to operate in offline mode? [yes / no] \n";
+				echo "You must enter either yes or no! \n";
+			}
+			} while (($answer != "YES")  AND ($answer != "NO"));
+			
+			//The loop exited because the user said yes or no,
+			//If he said yes confirm that he understands the ramifications.
+			if ($answer == "YES") {
+				// We need to make sure the technician is aware of the need to get a picture
+				// of the screen to confirm diskwipe status.
+				passthru("reset");
+				echo "It is imperative that you get a picture of the screen confirming that the diskwipe went through \n";
+				echo "otherwise failure to do so could result in termination. \n";
+				sleep(10);
+			}
+			//The loop exited because the user said yes or no,
+			//if he said no then shutdown the machine so that the technician can verify connectivity
+			if ($answer == "NO") {
+				// Shutdown this bo
+				shell_exec("sudo shutdown -h now");
+			}
+	}
+	
 	function setSortCode() {
 		//Present the user with a prompt to get the sort code of the site we are at
 		global $sortCode;
