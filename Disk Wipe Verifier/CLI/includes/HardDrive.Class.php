@@ -178,11 +178,11 @@ class HardDrive {
 		 * This function will generate the Hard Drive parameter information
 		 * for this hard drive instance
 		 */
-		writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - begin - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
+		writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - begin - singleHdparmOutput={isset($this->singleHdparmOutput[0]) ? $this->singleHdparmOutput[0] : null} wipeMethod={$this->wipeMethod}", $this->logFile);
 		
 		if ($this->wipeMethod == 'gdisk') {
 			// Create the hdparm command to be executed
-			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside begin true if - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
+			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside begin true if - singleHdparmOutput={isset($this->singleHdparmOutput[0]) ? $this->singleHdparmOutput[0] : null} wipeMethod={$this->wipeMethod}", $this->logFile);
 			$command = "sudo hdparm -i {$this->diskIdentifier} | grep -e SerialNo=";
 			
 			// Execute the command passing the output and return to class properties
