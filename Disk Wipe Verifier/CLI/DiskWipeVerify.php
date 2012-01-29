@@ -79,11 +79,12 @@
 	$response = transmitXMLMessageToPOST($message, xml_server);
 
 	// Check to determine if we received a valid POST response which should be SUCCESS or FAILURE
-	if ($response == "SUCCESS" || $response == "FAILURE") {
+	if ($response == "SUCCESS") {
 		echo "POST Transmission Successful! \n";
 		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
-	} else {
-		echo "POST TRANSMISSION FAILED - CHECK NETWORK CONNECTIVITY!";
+	} elseif ($response == "FAILURE") {
+		echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER \n";
+		echo $response . "\n";
 		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
 	}
 	
