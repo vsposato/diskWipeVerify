@@ -332,7 +332,7 @@ class HardDrive {
 			
 			do {
 				$driveSerial = $this->_getDrilledHardDriveSerialNumber();
-			} while ($driveSerial != false);
+			} while ($driveSerial === false);
 			
 			// Assign the confirmed serial number to the instance class property
 			$this->serialNumber = $driveSerial;
@@ -400,12 +400,10 @@ class HardDrive {
 		/*
 		 * This function will read stdin to get the serial number of the hard drive that was drilled
 		 */		
-		
+
 		//Get the serial number from the user
 		echo "What is the serial number of the drilled hard drive? \n";
-		do{
-			$inputSerial = trim(fgets(STDIN));
-		}while ($inputSerial = '');
+		$inputSerial = readline("");
 
 		do {
 			//Loop until the user enters a y or a n to determine if the hard drive was drilled
@@ -418,10 +416,12 @@ class HardDrive {
 		
 		if (strtoupper($answer) == 'Y') {
 			// The user confirmed the hard drive serial so return it
+			echo "Accepted \n";
 			return $inputSerial;
 		} elseif (strtoupper($answer) == 'N') {
 			// The user did not confirm the hard drive serial so start over
-			$this->_getDrilledHardDriveSerialNumber();
+			echo "Rejected \n";
+			return false;
 		}		
 	}
 }
