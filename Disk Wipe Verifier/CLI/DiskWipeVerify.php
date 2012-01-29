@@ -69,22 +69,28 @@
 	//Now display the message on the screen
 	displayNormalMessage($validation_array);
 
-	// Turn the validation array into well-formed XML to hand off
-	$message = createXMLFromArray($validation_array);
+	if (checkInternetConnectivity() === true) {
+		// We are on the internet so go ahead and transmit back to the mothership
+		// Turn the validation array into well-formed XML to hand off
+		$message = createXMLFromArray($validation_array);
+		
+		// Call the Transmission function
+		$response = transmitXMLMessageToPOST($message, xml_server);
 	
-	// Call the Transmission function
-	$response = transmitXMLMessageToPOST($message, xml_server);
-
-	// Check to determine if we received a valid POST response which should be SUCCESS or FAILURE
-	if ($response == "SUCCESS") {
-		echo "POST Transmission Successful! \n";
-		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
-	} elseif ($response == "FAILURE") {
-		echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER \n";
-		echo $response . "\n";
-		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+		// Check to determine if we received a valid POST response which should be SUCCESS or FAILURE
+		if ($response == "SUCCESS") {
+			echo "POST Transmission Successful! \n";
+			writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+		} elseif ($response == "FAILURE") {
+			echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER \n";
+			echo $response . "\n";
+			writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+		}
+	} elseif (checkInternetConnectivity() === false) {
+		// We are not on the internet so display a message reiterating that to the picture
+		echo "\n We are not on the internet and the technician confirmed offline mode! \n";
+		
 	}
-	
 	// Dump the object to the screen
 	writeToLogFile("Main Script ",objectToArray($checkWorkstation),$logFile);
 
