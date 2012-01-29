@@ -403,8 +403,10 @@ class HardDrive {
 		
 		//Get the serial number from the user
 		echo "What is the serial number of the drilled hard drive? \n";
-		$inputSerial = fgets(STDIN);
-
+		do{
+			$inputSerial = trim(fgets(STDIN));
+		}while (is_null($inputSerial));
+			
 		do {
 			//Loop until the user enters a y or a n to determine if the hard drive was drilled
 			echo "The serial number of the hard drive you drilled is {$inputSerial}. Is this correct? [Y / N] \n";
@@ -419,8 +421,8 @@ class HardDrive {
 			return $inputSerial;
 		} elseif (strtoupper($answer) == 'N') {
 			// The user did not confirm the hard drive serial so start over
-			_getDrilledHardDriveSerialNumber();
-		}
+			$this->_getDrilledHardDriveSerialNumber();
+		}		
 	}
 }
 

@@ -192,8 +192,14 @@ class Machine {
 		} elseif ($this->hostname === 'diskwipeusb') {
 			
 			// The hostname for a live usb is diskwipeusb so set liveCD to false
-			$this->liveUSB = false;
+			$this->liveCD = false;
 			
+		} else {
+
+			// The host name is neither the defaults for a liveUSB or liveCD so we are going to assume that 
+			// this is some other situation still not live CD
+			$this->liveCD = false;
+	
 		}
 		
 	}
