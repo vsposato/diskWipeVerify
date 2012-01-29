@@ -322,7 +322,7 @@ class Machine {
 			$this->drillStatus = true;
 			
 			// Now we are going to call the drilled hard drives creator
-			$this->createDrilledHardDrives;
+			$this->createDrilledHardDrives();
 		} else {
 			// The user says this is not a drill situation so kill the program because something is wrong
 			die('Shutdown the machine, check all cable connections, make sure hard drive is functioning, and re-run this process!');

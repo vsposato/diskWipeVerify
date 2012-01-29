@@ -74,26 +74,18 @@
 	// Turn the validation array into well-formed XML to hand off
 	$message = createXMLFromArray($validation_array);
 	
+	
 	// Call the Transmission function
-	$response = transmitXMLMessageToPOST($message,xml_server);
-	
-	var_dump($response);
-	/*
-	 * Initialize our RPC client object pasing in all appropriate variables
-	 */
-	//$client = new XML_RPC_Client(xml_path, xml_server, xml_port, xml_proxy, xml_proxy_port, xml_proxy_user, xml_proxy_pass);
-	/*
-	 * Turn on debugging
-	 */
-	//$client->setDebug(1);
-	/*
-	 * Create a response object to catch the information returning from the XML_RPC
-	 * 
-	 */
-	//$response = $client->send(buildXMLRPCMessage($message));
-	
-	// Dump the display array
-	//print_r($validation_array);
+	$response = transmitXMLMessageToPOST($message, xml_server);
+
+	// Check to determine if we received a valid POST response which should be SUCCESS or FAILURE
+	if ($response == "SUCCESS" || $response == "FAILURE") {
+		echo "POST Transmission Successful! \n";
+		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+	} else {
+		echo "POST TRANSMISSION FAILED - CHECK NETWORK CONNECTIVITY!";
+		writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+	}
 	
 	// Dump the object to the screen
 	writeToLogFile("Main Script ",objectToArray($checkWorkstation),$logFile);

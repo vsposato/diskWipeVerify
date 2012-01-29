@@ -331,7 +331,7 @@ class HardDrive {
 			writeToLogFile("Hard Drive Class ", "setDiskSerialNumber - begin if wipeMethod drill - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} serialNumber={$this->serialNumber} wipeMethod={$this->wipeMethod}", $this->logFile);
 			
 			do {
-				$driveSerial = $this->__getDrilledHardDriveSerialNumber();
+				$driveSerial = $this->_getDrilledHardDriveSerialNumber();
 			} while ($driveSerial != false);
 			
 			// Assign the confirmed serial number to the instance class property
@@ -412,14 +412,14 @@ class HardDrive {
 				//Get a single character from the STDIN
 				$answer = fgetc(STDIN);
 			} while ( trim($answer) == '');
-		} while (upper($answer) != 'Y' && upper($answer) !='N');
+		} while (strtoupper($answer) != 'Y' && strtoupper($answer) !='N');
 		
-		if (upper($answer) == 'Y') {
+		if (strtoupper($answer) == 'Y') {
 			// The user confirmed the hard drive serial so return it
 			return $inputSerial;
-		} elseif (upper($answer) == 'N') {
+		} elseif (strtoupper($answer) == 'N') {
 			// The user did not confirm the hard drive serial so start over
-			return false;
+			_getDrilledHardDriveSerialNumber();
 		}
 	}
 }

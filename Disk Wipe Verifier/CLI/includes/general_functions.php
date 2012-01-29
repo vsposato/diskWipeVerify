@@ -21,7 +21,7 @@ XML;
 		
 		$disksInformation = $xmlDocument->addChild("disks");
 		
-		foreach ($displayArray[disks] as $key=>$disk) {
+		foreach ($displayArray['disks'] as $key=>$disk) {
 			$individualDisk = $disksInformation->addChild("disk");
 			$individualDisk->addAttribute("id",$key);
 			$individualDisk->addAttribute("wipe_method",$disk['wipemethod']);
@@ -50,7 +50,6 @@ XML;
 		curl_setopt($curlHandle, CURLOPT_FORBID_REUSE, true);			// Force cURL to close session and not allow reuse
 		curl_setopt($curlHandle, CURLOPT_POST, true);					// Force regular POST to the URL
 		curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);			// Return return value of curl_exec() as a string instead of outputting it
-		curl_setopt($curlHandle, CURLOPT_UPLOAD, true);					// Prepare for an upload
 		curl_setopt($curlHandle, CURLOPT_CONNECTTIMEOUT, 60);			// Set the connection timeout to be 60 secs
 		curl_setopt($curlHandle, CURLOPT_TIMEOUT, 180);					// Set the process timeout to be 180 secs
 		curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $xmlMessage);		// Set the POST fields to be the xmlMessage that was handed in
