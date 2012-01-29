@@ -90,19 +90,6 @@ XML;
 		  return array_map('objectToArray', $object ); 
 	}  
 
-	function buildXMLRPCMessage($validation_array) {
-		/*
-		 * We are going to take the validation array that has been submitted and 
-		 * break it down into a valid XML RPC message to be sent to the web server
-		 * that will then code it and add it to the database
-		 */
-		
-		$parameters = array(XML_RPC_encode($validation_array));
-		$message = new XML_RPC_Message('submitDiskWipe', $parameters);
-		
-		return $message;
-	}
-
 	function traverseArray($iterator, $level = 0) {
 		/*
 		 * This function will utilize the RecursiveArrayIterator class from PHP to work through the entire array

@@ -9,11 +9,6 @@
 
 
 	/*
-	 * Implement the PEAR package for XML_RPC for communication with the backend server
-	 */
-	require_once('XML/RPC.php');
-	
-	/*
 	 * Implement the general_functions, asterisk_functions, and logging_functions for use throughout 
 	 * the process.
 	 */
@@ -37,14 +32,7 @@
 	/*
 	 * Define the values that are needed for the XML client connection
 	 */
-	define("xml_path", "dwv_xmlserver");
 	define("xml_server", "http://h41354.www4.hp.com/PMOPost/_webservices/DiskWipeImport.ashx");
-	define("xml_port", 80);
-	define("xml_proxy", NULL);
-	define("xml_proxy_port", NULL);
-	define("xml_proxy_user", NULL);
-	define("xml_proxy_pass", NULL);
-
 
 	// Clear the screen
 	passthru('reset');
@@ -74,7 +62,6 @@
 
 	// Turn the validation array into well-formed XML to hand off
 	$message = createXMLFromArray($validation_array);
-	
 	
 	// Call the Transmission function
 	$response = transmitXMLMessageToPOST($message, xml_server);
