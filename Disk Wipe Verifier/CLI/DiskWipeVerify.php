@@ -2,6 +2,11 @@
 <?php
 
 	/*
+	 * We are now ready for production, so let's turn error reporting down to a minimum
+	 */
+	error_reporting(E_ERROR | E_WARNING | E_PARSE);
+
+	/*
 	 * Set some global variables for use throughout
 	 */
 	global $sortCode;
