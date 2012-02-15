@@ -71,6 +71,15 @@
 	//Get the display message to be sent to the screen
 	$validation_array = verifyDiskWipe();	
 
+	// Clear the screen
+	passthru('reset');
+
+	// Here we will display the IP Address again for display in the picture
+	if (checkInternetConnectivity() === true) {
+		// We have internet connectivity so display the IP Address
+		echo displayIPAddress() . "\n";
+	}
+	
 	//Now display the message on the screen
 	displayNormalMessage($validation_array);
 

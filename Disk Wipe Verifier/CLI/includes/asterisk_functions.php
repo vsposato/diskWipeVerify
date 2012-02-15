@@ -93,7 +93,7 @@
 		while ($currentLineNumber <= $lineCount && $currentCharacterNumber <= $lengthOfMessage) {
 			//writeToLogFile("LOOP TO DISPLAY MESSAGE ","{$currentLineNumber} of {$lineCount}", $logFile);
 			//writeToLogFile("LOOP TO DISPLAY MESSAGE ","{$currentCharacterNumber} of {$lengthOfMessage}", $logFile);
-			if($currentCharacterNumber % 12 === 1) {
+			if($currentCharacterNumber > 1 && $currentCharacterNumber % 12 === 1) {
 				//We have reached the beginning of the next line so increment
 				$currentLineNumber++;
 			}
