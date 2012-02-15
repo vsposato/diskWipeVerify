@@ -78,6 +78,9 @@
 	if (checkInternetConnectivity() === true) {
 		// We have internet connectivity so display the IP Address
 		echo displayIPAddress() . "\n";
+	} else {
+		// We have no internet so display offline
+		echo "OFFLINE - NO INTERNET ACCESS! \n";
 	}
 	
 	//Now display the message on the screen
