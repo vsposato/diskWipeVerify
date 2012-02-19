@@ -102,6 +102,9 @@
 			echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER \n";
 			echo $response . "\n";
 			writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
+		} else {
+			echo ($response);
+			print_r($response);
 		}
 	} elseif (checkInternetConnectivity() === false) {
 		// We are not on the internet so display a message reiterating that to the picture
