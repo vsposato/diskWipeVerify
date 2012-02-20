@@ -53,7 +53,7 @@
 	
 	// Get the site code
 	setSortCode();
-
+	
 	//Create the logfile to capture all the data
 	if (! createLogFile() ) {
 		//Log File failed to be created

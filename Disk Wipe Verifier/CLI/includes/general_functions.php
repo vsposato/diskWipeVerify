@@ -1,5 +1,48 @@
 <?php
 
+	function getResponseFromUser ($prompt, $responses) {
+		/*
+		 * This function will take a prompt and a list of responses and get an answer back from the user at the console
+		 */
+		
+		// This array will hold the fixed responses handed in - making them all lowercase
+		$fixedResponses = array();
+
+		// Check to make sure that the user passed an array in
+		if (is_array($responses)) {
+			// We did so now we need to process each reponse and make it lower case
+			foreach ($responses as $response) {
+				// Convert response to lowercase and add to the fixed response 
+				$fixedResponses[] = strtolower($response);
+			}
+		} else {
+			// User did not pass an array so exit
+			echo "getResponse from User failed due to non-array passed as responses";
+			return FALSE;
+		}
+		
+		// Clear response so that it doesn't get confused
+		unset($response);
+		
+		do {
+			// Display prompt to user
+			echo $prompt;
+			// Set response to the user 	
+			$response = fgets(STDIN);
+			// Set response to all lower case
+			$response = trim(strtolower($response));
+		} while (! in_array($response, $fixedResponses,false));
+		
+		if ( in_array($response, $fixedResponses, false) ) {
+			// This actually worked the way we expected - so return the response
+			return $response;
+		} else {
+			// The response wasn't in the responses array, but got out of the loop anyway - so display the response
+			echo $response;
+			return FALSE;
+		}
+	}
+	
 	function createXMLFromArray($displayArray) {
 		/*
 		 * This will take the display array and turn it into well-formed XML
@@ -255,24 +298,24 @@ XML;
 				echo "Are you sure you want to operate in offline mode? [yes / no] \n";
 				echo "You must enter either yes or no! \n";
 			}
-			} while (($answer != "YES")  AND ($answer != "NO"));
+		} while (($answer != "YES")  AND ($answer != "NO"));
 			
-			//The loop exited because the user said yes or no,
-			//If he said yes confirm that he understands the ramifications.
-			if ($answer == "YES") {
-				// We need to make sure the technician is aware of the need to get a picture
-				// of the screen to confirm diskwipe status.
-				passthru("reset");
-				echo "It is imperative that you get a picture of the screen confirming that the diskwipe went through \n";
-				echo "otherwise failure to do so could result in termination. \n";
-				sleep(10);
-			}
-			//The loop exited because the user said yes or no,
-			//if he said no then shutdown the machine so that the technician can verify connectivity
-			if ($answer == "NO") {
-				// Shutdown this bo
-				shell_exec("sudo shutdown -h now");
-			}
+		//The loop exited because the user said yes or no,
+		//If he said yes confirm that he understands the ramifications.
+		if ($answer == "YES") {
+			// We need to make sure the technician is aware of the need to get a picture
+			// of the screen to confirm diskwipe status.
+			passthru("reset");
+			echo "It is imperative that you get a picture of the screen confirming that the diskwipe went through \n";
+			echo "otherwise failure to do so could result in termination. \n";
+			sleep(10);
+		}
+		//The loop exited because the user said yes or no,
+		//if he said no then shutdown the machine so that the technician can verify connectivity
+		if ($answer == "NO") {
+			// Shutdown this bo
+			shell_exec("sudo shutdown -h now");
+		}
 	}
 	
 	function setSortCode() {
