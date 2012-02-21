@@ -99,7 +99,7 @@
 			echo "POST Transmission Successful! \n";
 			writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
 		} elseif ($response == "FAILURE") {
-			echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER \n";
+			echo "POST TRANSMISSION FAILED - RESPONSE FROM SERVER: \n";
 			echo $response . "\n";
 			writeToLogFile("POST Response", "POST Response was {$response}", $logFile);
 		} else {

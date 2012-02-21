@@ -1,5 +1,44 @@
 <?php
 
+	function checkLocation () {
+		/*
+		 * This function is going to be called to request from the user what location they are
+		 * currently in. The options will be Bank or Non-bank. If Bank is selected, then it will ask for
+		 * a proxy username and password. If non-bank is selected, then it will not worry about such things.
+		 * 
+		 * @TODO - Possibly add a proxy selection routine that would read a listing and get a response back from that
+		 */
+		
+		// Prepare the return array
+		$returnResponse = array();
+		
+		// Ask the user where they are currently located
+		$locationAnswer = getResponseFromUser("Where are you currently located? ([B]ank / [N]on-bank) \n", array('b','n'),FALSE);
+		
+		if ($locationAnswer == 'b') {
+			// Set the location to bank
+			$returnResponse['LOCATION'] = 'bank';
+			
+			// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
+			$returnResponse['PROXY'] = 'spxyric1.bankofamerica.com';
+			$returnResponse['PROXY_PORT'] = '8080';
+			$returnResponse['PROXY_TYPE'] = 'HTTP';
+			
+			// We need to get the user's username and password in order for the proxy to function - however we have to get the pieces separate and then combine
+			// them into the format CURL is looking for username:password
+			$username = getResponseFromUser("What is your username? \n", array('username'), FALSE);
+			$password = getResponseFromUser("What is your password? (Will not display on screen) \n", array('password'), TRUE);
+			
+			// Combine the username and password into the exected format for CURL
+			$returnResponse['PROXYUSERPWD'] = $username . ':' . $password;
+		} elseif ($locationAnswer == 'n') {
+			// Set the location to offsite since it is non-bank
+			$returnResponse['LOCATION'] = 'offsite';
+		}
+
+		// Return response to calling function
+		return $returnResponse;
+	}
 	function getResponseFromUser ($prompt, $responses, $password = FALSE) {
 		/*
 		 * This function will take a prompt and a list of responses and get an answer back from the user at the console
@@ -128,6 +167,7 @@ XML;
 			
 	}
 	
+	
 	function transmitXMLMessageToPOST($xmlMessage, $postURL) {
 		/*
 		 * This will take a pre-formed XML Message and transmit the file via cURL to 
@@ -137,20 +177,44 @@ XML;
 		// This will initiate a cURL session with POST
 		$curlHandle = curl_init();
 		$contentType = array('Content-Type: text/xml');
-
+		$responsesFromUser = array();
+		
 		// Set the options for our CURL handler
 		curl_setopt($curlHandle, CURLOPT_URL, $postURL);				// Set the URL for HP's POST
-		curl_setopt($curlHandle, CURLOPT_FORBID_REUSE, true);			// Force cURL to close session and not allow reuse
-		curl_setopt($curlHandle, CURLOPT_POST, true);					// Force regular POST to the URL
-		curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, true);			// Return return value of curl_exec() as a string instead of outputting it
+		curl_setopt($curlHandle, CURLOPT_FORBID_REUSE, TRUE);			// Force cURL to close session and not allow reuse
+		curl_setopt($curlHandle, CURLOPT_POST, TRUE);					// Force regular POST to the URL
+		curl_setopt($curlHandle, CURLOPT_RETURNTRANSFER, TRUE);			// Return return value of curl_exec() as a string instead of outputting it
 		curl_setopt($curlHandle, CURLOPT_CONNECTTIMEOUT, 60);			// Set the connection timeout to be 60 secs
 		curl_setopt($curlHandle, CURLOPT_TIMEOUT, 180);					// Set the process timeout to be 180 secs
 		curl_setopt($curlHandle, CURLOPT_POSTFIELDS, $xmlMessage);		// Set the POST fields to be the xmlMessage that was handed in
 		curl_setopt($curlHandle, CURLOPT_HTTPHEADER, $contentType);		// Set the content type to be XML
+		curl_setopt($curlHandle,CURLOPT_FAILONERROR,TRUE);				// Forces the system to fail if it can't connect
+
+		// Here we are going to do some checking to see if we are in a bank or non-bank location
+		// if we are in a bank location, then we are going to set some more CURL_OPTS
+		// if we are not, then we are going to continue as necessary
+		$responsesFromUser = checkLocation();
 		
+		if (in_array('bank',$responsesFromUser, FALSE)) {
+			// We are in a bank location, so we need to complete the setup of CURL
+			curl_setopt($curlHandle, CURLOPT_PROXY, $responsesFromUser['PROXY']);
+			curl_setopt($curlHandle, CURLOPT_PROXYPORT, $responsesFromUser['PROXY_PORT']);
+			curl_setopt($curlHandle, CURLOPT_PROXYTYPE, $responsesFromUser['PROXY_TYPE']);
+			curl_setopt($curlHandle, CURLOPT_PROXYUSERPWD, $responsesFromUser['PROXYUSERPWD']);
+		} elseif (in_array('offsite', $responsesFromUser, FALSE)) {
+			// We are in an offsite location so do nothing
+		}
 		// Submit the cURL request and capture the response
 		$postResponse = curl_exec($curlHandle);
 		
+		// Check to see if the process completed without error
+		if ($postResponse === FALSE) {
+			// The process errored out - so display it on screen
+			echo "Transmission Error : Error No: " . curl_errno($curlHandle) . " Error Desc: " . curl_error($curlHandle);
+		} else {
+			// The process returned no errors
+			echo "Transmission appeared to complete with no errors!";
+		}
 		// Close the cURL handler
 		curl_close($curlHandle);
 			
@@ -378,8 +442,6 @@ XML;
 		}while (!preg_match('/^\d{7}$/',$sortCode));
 		
 		//Lets confirm that the user really meant that sort code
-		echo "{$sortCode} - are you sure? (yes / no) \n";
-		
 		//Here we are going to run an input loop to confirm that the user really meant
 		//this sort code
 		do {
