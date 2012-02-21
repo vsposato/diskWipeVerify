@@ -336,7 +336,7 @@ XML;
 		//this sort code
 		do {
 			//Read 4 characters from the keyboard
-			$answer = fgets(STDIN);
+			$answer = getResponseFromUser("{$sortCode} - are you sure? (yes / no) \n", array('yes','no'), FALSE);
 				
 			//Trim the response and convert it to upper
 			$answer = trim(strtoupper($answer));
@@ -384,7 +384,7 @@ XML;
 		//this sort code
 		do {
 			//Read 4 characters from the keyboard
-			$answer = fgets(STDIN);
+			$answer = getResponseFromUser("{$sortCode} - are you sure? (yes / no) \n", array('yes','no'), FALSE);
 			
 			//Trim the response and convert it to upper
 			$answer = trim(strtoupper($answer));

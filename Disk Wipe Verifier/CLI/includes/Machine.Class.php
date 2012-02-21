@@ -314,15 +314,9 @@ class Machine {
 		 * the number of hard drives required
 		 */
 		
-		echo "We only detected one hard drive, did you drill the drives for this machine? (Y / N) \n";
-		do {
-			//Loop until the user enters a y or a n to determine if the hard drive was drilled
-			do {
-				//Get a single character from the STDIN
-				$answer = fgetc(STDIN);
-			} while ( trim($answer) == '');
-		} while (strtoupper($answer) != 'Y' && strtoupper($answer) !='N');
-	
+		// Our system detected a drilling situation, and we need to confirm if this is the case
+		$answer = getResponseFromUser("We only detected one hard drive, did you drill the drives for this machine? (Y / N) \n", array('y','n'), FALSE);
+
 		// Test to determine if this is a drill situation
 		if (strtoupper($answer) == 'Y') {
 			// The user says this is a drill situation so we are going set the status to true
@@ -391,20 +385,14 @@ class Machine {
 		 * the count of hard drives for that machine with the drill flag set for each of them
 		 */
 		
-		echo "Is this machine a [S]erver or a [W]orkstation? (S / W) \n";
-		do {
-			//Loop until the user enters a y or a n to determine if the hard drive was drilled
-			do {
-				//Get a single character from the STDIN
-				$answer = fgetc(STDIN);
-			} while ( trim($answer) == '');
-		} while (strtoupper($answer) != 'S' && strtoupper($answer) !='W');
+		// Since we are creating drilled hard drives - we need to know how many drilled hard drives there are 
+		// a server has 4 hard drives, and a workstation has 1
+		$answer = getResponseFromUser("Is this machine a [S]erver or a [W]orkstation? (S / W) \n", array('s','w'), FALSE);
 		
 		if (strtoupper($answer) == 'S') {
 			/*
 			 * This is a server so we will need to generate 4 hard drives for drilling
 			 */
-			
 			
 			//Build an array for the disk identifiers to be used for the hard drives
 			$serverDiskIdentifiers = array("/dev/sda","/dev/sdb","/dev/sdc","/dev/sdd");

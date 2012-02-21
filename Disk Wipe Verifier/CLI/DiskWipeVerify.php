@@ -51,16 +51,6 @@
 		confirmInternetConnectivityFailed();
 	}
 	
-	echo "We got here \n";
-	$username = getResponseFromUser("Please enter your username: \n", array('username'), FALSE);
-	$password = getResponseFromUser("Please enter your password (will not display on screen): \n", array('password'), TRUE);
-	$response = getResponseFromUser("Do you like sex?", array('yes','no'), FALSE);
-	
-	echo "Your username is {$username} \n ";
-	echo "Your password is {$password} \n ";
-	echo "When asked if you like sex you said : {$response} \n";
-	die;
-	
 	// Get the site code
 	setSortCode();
 	
