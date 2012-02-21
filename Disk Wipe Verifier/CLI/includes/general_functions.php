@@ -1,21 +1,28 @@
 <?php
 
-	function getResponseFromUser ($prompt, $responses) {
+	function getResponseFromUser ($prompt, $responses, $password = FALSE) {
 		/*
 		 * This function will take a prompt and a list of responses and get an answer back from the user at the console
+		 * and this function will also allow the input of a password if so needed
 		 */
 		
 		// This array will hold the fixed responses handed in - making them all lowercase
 		$fixedResponses = array();
+		$username = FALSE;
 
 		// Check to make sure that the user passed an array in
 		if (is_array($responses)) {
-			// We did so now we need to process each reponse and make it lower case
-			foreach ($responses as $response) {
-				// Convert response to lowercase and add to the fixed response 
-				$fixedResponses[] = strtolower($response);
-			}
-		} else {
+				// We did so now we need to process each reponse and make it lower case
+				foreach ($responses as $response) {
+					// Convert response to lowercase and add to the fixed response 
+					$fixedResponses[] = strtolower($response);
+				}
+
+				// Check to see if the responses are only 1, and that one is username - this denotes that we don't have a set to compare it against
+				if (count($responses) == 1 && in_array('username',$responses,false)) {
+					$username = TRUE;
+				}
+		} elseif (! is_array($responses) && $password = FALSE) {
 			// User did not pass an array so exit
 			echo "getResponse from User failed due to non-array passed as responses";
 			return FALSE;
@@ -24,22 +31,65 @@
 		// Clear response so that it doesn't get confused
 		unset($response);
 		
-		do {
-			// Display prompt to user
-			echo $prompt;
-			// Set response to the user 	
-			$response = fgets(STDIN);
-			// Set response to all lower case
-			$response = trim(strtolower($response));
-		} while (! in_array($response, $fixedResponses,false));
-		
-		if ( in_array($response, $fixedResponses, false) ) {
-			// This actually worked the way we expected - so return the response
+		// Check to see if we are getting a password
+		if (! $password) {
+			// We are not so no need to do anything special
+			if (! $username) {
+				// The username flag is false so therefore this is not a password and is not a username request so parse responses
+				do {
+					// Display prompt to user
+					echo $prompt;
+					// Set response to the user 	
+					$response = fgets(STDIN);
+					// Set response to all lower case
+					$response = trim(strtolower($response));
+				} while (! in_array($response, $fixedResponses,false));
+				
+				if ( in_array($response, $fixedResponses, false) ) {
+					// This actually worked the way we expected - so return the response
+					return $response;
+				} else {
+					// The response wasn't in the responses array, but got out of the loop anyway - so display the response
+					echo $response;
+					return FALSE;
+				}
+			} elseif ($username) {	
+				// This is  a username prompt so make sure that it is exactly seven characters
+				do {
+					// Display prompt to user
+					echo $prompt;
+					// Set response to the user
+					$response = fgets(STDIN);
+					// Set response to all lower case
+					$response = trim(strtolower($response));
+				} while ((strlen($response)) != 7);
+				
+				// Pass the response back to the calling routine
+				return $response;
+			}
+		} elseif ($password) {
+			// We are getting a password so we need to turn off echo
+			
+			// Get the current shell style
+			$oldShell = shell_exec('stty -g');
+			
+			// Pass the stty command to turn off the echo of the user's input
+			shell_exec('stty -echo');
+			
+			do {
+				// Display prompt to user
+				echo $prompt;
+				// Set response to the user 	
+				$response = fgets(STDIN);
+				// Set response to all lower case
+				$response = trim(strtolower($response));
+			} while ((strlen($response)) < 6);
+									
+			// Turn the old shell back on after we have gotten the password
+			shell_exec('stty ' . $oldShell);
+
+			// Pass the response back to the calling routine
 			return $response;
-		} else {
-			// The response wasn't in the responses array, but got out of the loop anyway - so display the response
-			echo $response;
-			return FALSE;
 		}
 	}
 	

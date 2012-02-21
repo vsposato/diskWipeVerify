@@ -4,7 +4,7 @@
 	/*
 	 * We are now ready for production, so let's turn error reporting down to a minimum
 	 */
-	error_reporting(E_ERROR | E_WARNING | E_PARSE);
+	//error_reporting(E_ERROR | E_WARNING | E_PARSE);
 
 	/*
 	 * Set some global variables for use throughout
@@ -50,6 +50,16 @@
 		// We do not have internet connectivity check to see if the person knows
 		confirmInternetConnectivityFailed();
 	}
+	
+	echo "We got here \n";
+	$username = getResponseFromUser("Please enter your username: \n", array('username'), FALSE);
+	$password = getResponseFromUser("Please enter your password (will not display on screen): \n", array('password'), TRUE);
+	$response = getResponseFromUser("Do you like sex?", array('yes','no'), FALSE);
+	
+	echo "Your username is {$username} \n ";
+	echo "Your password is {$password} \n ";
+	echo "When asked if you like sex you said : {$response} \n";
+	die;
 	
 	// Get the site code
 	setSortCode();
