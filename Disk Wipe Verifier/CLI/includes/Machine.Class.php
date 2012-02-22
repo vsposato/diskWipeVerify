@@ -343,7 +343,7 @@ class Machine {
 		 * This function will use system commands to output the physical
 		 * disk information for us throughout many of our functions
 		 */
-		exec('sudo fdisk -l | grep -e "^Disk /"', $this->fdiskOutput);	
+		exec('sudo fdisk -l | grep -e "^Disk /" 2>>/dev/null', $this->fdiskOutput);	
 	}
 
 	protected function _getSystemSerialNumber() {

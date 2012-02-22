@@ -125,10 +125,10 @@
 		
 	}
 	// Dump the object to the screen
-	writeToLogFile("Main Script ",objectToArray($checkWorkstation),$logFile);
+	writeToLogFile("Main Script ",objectToArray($checkDevice),$logFile);
 
 	// Close the log file
-	closeLogFile($logFile, $checkWorkstation->getSerialNumber());
+	closeLogFile($logFile, $checkDevice->getSerialNumber());
 	
 /*
  * End of File: DiskWipeVerify.php

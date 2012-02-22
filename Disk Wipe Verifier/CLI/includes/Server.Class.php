@@ -60,7 +60,7 @@ class Server extends Machine {
 		 * If the hardDriveCount is 1 AND the liveCD is false, then we have encountered a drilling situation, also if the hardDriveCount is 0
 		* AND the liveCD is true we have encountered a drilling situation
 		*/
-		if (($this->hardDriveCount < 5) && ($this->getLiveCD() === false)) {
+		if (($this->hardDriveCount < 3) && ($this->getLiveCD() === false)) {
 			/*
 			 * We found only one hard drive so we need to set the drill status class property
 			*/
@@ -68,7 +68,7 @@ class Server extends Machine {
 				
 			$this->setDrillStatus();
 	
-		} elseif (($this->hardDriveCount < 4) && ($this->getLiveCD() === true)) {
+		} elseif (($this->hardDriveCount < 2) && ($this->getLiveCD() === true)) {
 				
 			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $this->logFile);
 				
@@ -106,6 +106,33 @@ class Server extends Machine {
 		writeToLogFile("Server Class ", "createHardDriveInstances - begin", $this->logFile);
 	
 		if ($this->drillStatus === false) {
+			
+			$minimumHardDrives = array("/dev/cciss/c0d0","/dev/cciss/c0d1","/dev/cciss/c0d2","/dev/cciss/c0d3");
+			
+			if (count($this->fdiskOutput) < 3) {
+				// The server has most likely been wiped so we need to add the appropriate drives
+				foreach ($minimumHardDrives as $hardDrive) {
+					// Loop through each drive and see if it exists in the fdisk output
+					$found = FALSE;
+					
+					foreach ($this->fdiskOutput as $tempDisk) {
+						// Clean up the current Fdisk Output so we can compare it
+						$verify = $this->_cleanFdiskLine($tempDisk);
+						
+						// Compare the Fdisk Output disk to the current Hard Drive in the test array
+						if ($verify == $hardDrive) {
+							$found = TRUE;
+						}
+					}
+					
+					// Check to see if the drive was found in Fdisk Output
+					if (! $found) {
+						// We need to add the item to the fdisk output array
+						$this->fdiskOutput[] = "Disk {$hardDrive}: 80 GB, 80000000 bytes";
+					}
+				}
+			}
+			
 			//We didn't drill the hard drives so continue the process
 			foreach ($this->fdiskOutput as $disk) {
 				// We are going to process each row of disk data to create new hard drive instances
