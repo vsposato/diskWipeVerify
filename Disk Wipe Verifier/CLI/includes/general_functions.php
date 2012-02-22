@@ -210,10 +210,10 @@ XML;
 		// Check to see if the process completed without error
 		if ($postResponse === FALSE) {
 			// The process errored out - so display it on screen
-			echo "Transmission Error : Error No: " . curl_errno($curlHandle) . " Error Desc: " . curl_error($curlHandle);
+			echo "Transmission Error : Error No: " . curl_errno($curlHandle) . " Error Desc: " . curl_error($curlHandle) . "\n";
 		} else {
 			// The process returned no errors
-			echo "Transmission appeared to complete with no errors!";
+			echo "Transmission appeared to complete with no errors! \n";
 		}
 		// Close the cURL handler
 		curl_close($curlHandle);
@@ -356,7 +356,7 @@ XML;
 		 * This function will take the information gathered and determine whether or
 		 * not the disk wipe validation passed or failed
 		 */
-		global $checkWorkstation;
+		global $checkDevice;
 		global $sortCode;
 		
 		//This is the array that will hold just the display information
@@ -366,19 +366,19 @@ XML;
 		$display_array['sort_code'] = $sortCode;
 		
 		//Set the machine serial number
-		$display_array['machine_serial'] = $checkWorkstation->getSerialNumber();
+		$display_array['machine_serial'] = $checkDevice->getSerialNumber();
 		
 		// Set the machine wipe status
-		$display_array['wipe_status'] = $checkWorkstation->getDiskWipeStatus();
+		$display_array['wipe_status'] = $checkDevice->getDiskWipeStatus();
 		
 		// Set the disk wipe method
-		$display_array['wipe_method'] = $checkWorkstation->getDiskWipeMethod();
+		$display_array['wipe_method'] = $checkDevice->getDiskWipeMethod();
 		
 		// Set the number of hard drives
-		$display_array['disk_count'] = $checkWorkstation->getValidDriveCount();
+		$display_array['disk_count'] = $checkDevice->getValidDriveCount();
 		
 		//Gather the hard drive information from the machine class
-		$display_array['disks'] = $checkWorkstation->getHardDrives();
+		$display_array['disks'] = $checkDevice->getHardDrives();
 				
 		//Return the array back to the calling function
 		return $display_array;

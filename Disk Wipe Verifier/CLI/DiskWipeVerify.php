@@ -22,9 +22,10 @@
 	require_once('includes/logging_functions.php');
 	
 	/*
-	 * Include the machine class so that it can be instantiated later
+	 * Include ofclass so that it can be instantiated later
 	 */
-	require_once('includes/Machine.Class.php');
+	require_once('includes/Server.Class.php');
+	require_once('includes/Workstation.Class.php');
 	
 	//Set the timezone
 	date_default_timezone_set("America/New_York");
@@ -65,9 +66,21 @@
 	echo "Parsing data for sort code - {$sortCode} \n";
 	writeToLogFile("Parsing Begin", "Parsing data for sort code - {$sortCode}", $logFile);
 	
-	// Create a new machine
-	$checkWorkstation = new Machine();
+	// We are going to ask the user what type of machine they are verifying
+	$response = getResponseFromUser('Is this a [S]erver or [W]orkstation that you are verifying? \n', array('s','w'),FALSE);
 	
+	if ($response == 's') {
+		
+		// We are going to be verifying a server so instantiate a new server object
+		$checkDevice = new Server();
+		
+	} elseif ($response == 'w') {
+		
+		// We are going to be verifying a workstation so instantiate a new workstation object
+		$checkDevice = new Workstation();
+		
+	}
+
 	//Get the display message to be sent to the screen
 	$validation_array = verifyDiskWipe();	
 
