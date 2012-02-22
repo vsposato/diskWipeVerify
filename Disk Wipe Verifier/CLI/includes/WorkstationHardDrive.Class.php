@@ -11,7 +11,7 @@ class WorkstationHardDrive extends HardDrive {
 		 */
 
 		// Instantiate the parent constructor
-		parent::__construct();
+		parent::__construct($diskIdentifier, $drill);
 		
 		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
 		$this->setSingleHdparmOutput();

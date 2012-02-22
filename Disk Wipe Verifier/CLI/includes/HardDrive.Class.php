@@ -164,32 +164,6 @@ class HardDrive {
 		
 	}
 		
-	protected function setSingleHdparmOutput() {
-		/*
-		 * This function will generate the Hard Drive parameter information
-		 * for this hard drive instance
-		 */
-		writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - begin - singleHdparmOutput={isset($this->singleHdparmOutput[0]) ? $this->singleHdparmOutput[0] : null} wipeMethod={$this->wipeMethod}", $this->logFile);
-		
-		if ($this->wipeMethod == 'gdisk') {
-			// Create the hdparm command to be executed
-			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside begin true if - singleHdparmOutput={isset($this->singleHdparmOutput[0]) ? $this->singleHdparmOutput[0] : null} wipeMethod={$this->wipeMethod}", $this->logFile);
-			$command = "sudo hdparm -i {$this->diskIdentifier} | grep -e SerialNo=";
-			
-			// Execute the command passing the output and return to class properties
-			exec($command, $this->singleHdparmOutput,$this->singleHdparmReturn);
-			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside end true if - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
-		} elseif ($this->wipeMethod == 'drill') {
-			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside begin false if - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
-			
-			// This was a drill so set the hdparm class properties to null
-			$this->singleHdparmOutput = null;
-			$this->singleHdparmReturn = null;
-			writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - inside end false if - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
-		}
-		writeToLogFile("Hard Drive Class ", "setSingleHdparmOutput - end - singleHdparmOutput={$this->singleHdparmOutput[0]} wipeMethod={$this->wipeMethod}", $this->logFile);
-	}
-	
 	protected function setPartitionCount() {
 		/*
 		 * This function will use the fdisk output generated previously
@@ -221,64 +195,6 @@ class HardDrive {
 		
 	}	
 
-	protected function setValidDisk() {
-		/*
-		 * This function will utilize the hdparm command to determine
-		 * if the drive in question is a valid disk or not. A non-valid
-		 * disk (i.e., USB, CD) will pass back an error when the hdparm
-		 * command is run on it. This will allow us to identify whether
-		 * or not the drive is valid
-		 */
-		writeToLogFile("Hard Drive Class ", "setValidDisk - begin - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-		
-		if ( $this->wipeMethod == 'gdisk' ) {
-			
-			// This is a normal gdisked hard drive so we can handle the valid disk through normal means
-			writeToLogFile("Hard Drive Class ", "setValidDisk - begin wipemethod if gdisk - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-			
-			if (empty($this->singleHdparmOutput)) {
-				
-				writeToLogFile("Hard Drive Class ", "setValidDisk - begin if empty singleHdparmOutput - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-				//No hdparm output detected so call the method to generate it
-				$this->setSingleHdparmOutput();
-				writeToLogFile("Hard Drive Class ", "setValidDisk - end if empty singleHdparmOutput - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-				
-			}
-			
-			if ($this->singleHdparmReturn == 0) {
-				/*
-				 * HDPARM returned a value so this is a valid disk to be reviewed
-				 */
-				writeToLogFile("Hard Drive Class ", "setValidDisk - begin singleHdparmReturn if 0 - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-				
-				$this->validDisk = true;
-
-				writeToLogFile("Hard Drive Class ", "setValidDisk - end singleHdparmReturn if 0 - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-
-			} else {
-				/*
-				 * HDPARM returned an error therefore it is most likely a USB / CD bootable disk
-				 * so we will make this a non-valid disk for purpose of disk wipe
-				 */
-				writeToLogFile("Hard Drive Class ", "setValidDisk - begin singleHdparmReturn if not 0 - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-				$this->validDisk = false;
-				writeToLogFile("Hard Drive Class ", "setValidDisk - end singleHdparmReturn if not 0 - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-				
-			}
-		} elseif ( $this->wipeMethod == 'drill' ) {
-
-			writeToLogFile("Hard Drive Class ", "setValidDisk - begin wipemethod if drill - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-			
-			// This drive was drilled and therefore not present to have this determination made so is automatically considered valid
-			$this->validDisk = true;
-
-			writeToLogFile("Hard Drive Class ", "setValidDisk - end wipemethod if drill - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-		}
-		
-		writeToLogFile("Hard Drive Class ", "setValidDisk - end - singleHdparmOutput={$this->singleHdparmOutput[0]} validDisk={$this->validDisk} wipeMethod={$this->wipeMethod}", $this->logFile);
-		
-	}
-	
 	protected function setDiskSerialNumber() {
 		/*
 		 * This function will utilize the hdparm command to gather the

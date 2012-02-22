@@ -11,7 +11,7 @@ class ServerHardDrive extends HardDrive {
 		 */
 
 		// Instantiate the parent constructor
-		parent::__construct();
+		parent::__construct($diskIdentifier, $drill);
 		
 		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
 		$this->setSingleHdparmOutput();
@@ -197,10 +197,15 @@ class ServerHardDrive extends HardDrive {
 		exec($command, $smartctlOutput);
 		
 		// Now we need to clean up the serial number that comes back
-		$outputSplit = explode(":",$smartctlOutput);
+		$outputSplit = explode(":",$smartctlOutput[0]);
 		
 		// We are going to pop the last element off of the end of the exploded array
 		$serialNumber = trim(array_pop($outputSplit));
+		
+		// Logical disks in an array will provide a blank serial number - so pass LOGICALDISK in instead - prevents POST errors
+		if ($serialNumber == "") {
+			$serialNumber = "LOGICALDISK";
+		}
 		
 		// Return the result to the calling routine
 		return $serialNumber;
