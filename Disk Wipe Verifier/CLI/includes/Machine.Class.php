@@ -39,22 +39,12 @@ class Machine {
 			define("STDIN", fopen('php://stdin','r'));
 		}
 		
-		// Import the Hard Drive class
-		require_once('HardDrive.Class.php');
-		
 		// We will need to set the serial number of the machine
 		$this->setSerialNumber();
 		
 		// We will need to determine the system verification type - either livecd or liveusb
 		$this->setLiveCD();
 		
-		// We will now get the hard drive information and create new hard drives for each drive in this machine
-		$this->findHardDrives();
-
-		writeToLogFile("Machine Class ", "Finished Finding Hard Drives", $this->logFile);
-		
-		// We are now going to determine if all valid hard drives have been wiped and therefore the machine has passed
-		$this->determineWipeStatus();
 	}
 	
 	public function getDiskWipeStatus() {
@@ -259,55 +249,6 @@ class Machine {
 		$this->validDriveCount = $tempValidCounter;
 	}
 			
-	protected function setHardDriveCount() {
-		/*
-		 * We will be determining the number of functional hard drives within the 
-		 * machine that are NOT the bootable verify drive
-		 */
-		
-		writeToLogFile("Machine Class ", "setHardDriveCount - begin", $this->logFile);
-		
-		// We need to make sure that the fdisk array has already been setup, and if not we will run the function to set it up
-		if (empty($this->fdiskOutput)) {
-			/*
-			 * There currently is nothing in the fdisk output array so we will need to call the function
-			 * to create the data
-			 */
-			
-			writeToLogFile("Machine Class ", "setHardDriveCount - inside if fdiskOutput", $this->logFile);
-			
-			$this->_fdiskOutputCreation();
-		}
-		
-		// We are going to use the count of the fdiskOutput array to give us the number of hard drives
-		// since the exec command that we used was specific to lines that output harddrives
-		writeToLogFile("Machine Class ", "setHardDriveCount - after if hardDriveCount={$this->hardDriveCount}", $this->logFile);
-		
-		$this->hardDriveCount = count($this->fdiskOutput);
-
-		writeToLogFile("Machine Class ", "setHardDriveCount - after assignment hardDriveCount={$this->hardDriveCount}", $this->logFile);
-		
-		/*
-		 * If the hardDriveCount is 1 AND the liveCD is false, then we have encountered a drilling situation, also if the hardDriveCount is 0
-		 * AND the liveCD is true we have encountered a drilling situation
-		 */
-		if (($this->hardDriveCount === 1) && ($this->getLiveCD() === false)) {
-			/*
-			 * We found only one hard drive so we need to set the drill status class property
-			 */
-			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $this->logFile);
-			
-			$this->setDrillStatus();
-
-		} elseif (($this->hardDriveCount === 0) && ($this->getLiveCD() === true)) {
-			
-			writeToLogFile("Machine Class ", "setHardDriveCount - inside if for DrillStatus hardDriveCount={$this->hardDriveCount}", $this->logFile);
-			
-			$this->setDrillStatus();
-			
-		}
-	}
-	
 	protected function setDrillStatus() {
 		/*
 		 * This function will determine if this is a true drill situation, and then create
@@ -315,7 +256,7 @@ class Machine {
 		 */
 		
 		// Our system detected a drilling situation, and we need to confirm if this is the case
-		$answer = getResponseFromUser("We only detected one hard drive, did you drill the drives for this machine? (Y / N) \n", array('y','n'), FALSE);
+		$answer = getResponseFromUser("We only detected less than the appropriate number of hard drive(s), did you drill the drives for this machine? (Y / N) \n", array('y','n'), FALSE);
 
 		// Test to determine if this is a drill situation
 		if (strtoupper($answer) == 'Y') {
@@ -326,7 +267,7 @@ class Machine {
 			$this->createDrilledHardDrives();
 		} else {
 			// The user says this is not a drill situation so kill the program because something is wrong
-			die('Shutdown the machine, check all cable connections, make sure hard drive is functioning, and re-run this process!');
+			die('Shutdown the machine, check all cable connections, make sure hard drive(s) is/are functioning, and re-run this process!');
 		}
 	}
 	
@@ -354,7 +295,7 @@ class Machine {
 		 */
 		
 		// Set the variable that will be changed if a hard drive failed
-		$anyHardDriveFailed = false;
+		$anyHardDriveFailed = FALSE;
 		
 		// Iterate through each hard drive instance defined in the machine
 		foreach ($this->hardDrives as $hardDrive) {
@@ -368,7 +309,7 @@ class Machine {
 			} elseif ($hardDrive->getValidDisk() && ! $hardDrive->getWipeValidation()) {
 				
 				// Hard drive was a valid drive but was not wiped so we change the flag to be a fail
-				$anyHardDriveFailed = true;
+				$anyHardDriveFailed = TRUE;
 			
 			}
 		}
@@ -379,62 +320,7 @@ class Machine {
 		}
 	}
 	
-	protected function createDrilledHardDrives() {
-		/*
-		 * This function will determine if this is a workstation or a server, and then generate 
-		 * the count of hard drives for that machine with the drill flag set for each of them
-		 */
-		
-		// Since we are creating drilled hard drives - we need to know how many drilled hard drives there are 
-		// a server has 4 hard drives, and a workstation has 1
-		$answer = getResponseFromUser("Is this machine a [S]erver or a [W]orkstation? (S / W) \n", array('s','w'), FALSE);
-		
-		if (strtoupper($answer) == 'S') {
-			/*
-			 * This is a server so we will need to generate 4 hard drives for drilling
-			 */
-			
-			//Build an array for the disk identifiers to be used for the hard drives
-			$serverDiskIdentifiers = array("/dev/sda","/dev/sdb","/dev/sdc","/dev/sdd");
-			
-			foreach ($serverDiskIdentifiers as $disk) {
-				
-				//Create a new instance for each of the hard drives that were drilled
-				$this->hardDrives[$disk] = new HardDrive($disk,$this->drillStatus);
-			}
-		} else {
-			/*
-			 * This is a workstation so we will need to generate 1 hard drive for drilling
-			 */
-			
-			//Since there is only one hard drive just pass string literals to the function
-			$this->hardDrives["/dev/sda"] = new HardDrive("/dev/sda",$this->drillStatus);
-		}
-	}
-		
-	protected function createHardDriveInstances() {
-		/*
-		 * This function is going to read the fdiskOutput and add an array entry that points to a new instance 
-		 * of the hard drive class
-		 */	
-		
-		writeToLogFile("Machine Class ", "createHardDriveInstances - begin", $this->logFile);
-		
-		if ($this->drillStatus === false) {
-			//We didn't drill the hard drives so continue the process
-			foreach ($this->fdiskOutput as $disk) {
-				// We are going to process each row of disk data to create new hard drive instances
-				$tempHDIdentifier = $this->_cleanFdiskLine($disk);
-				
-				writeToLogFile("Machine Class ", "createHardDriveInstances - inside foreach tempHDIdentifier={$tempHDIdentifier}", $this->logFile);
-				
-				// We are going to now create a new instance of a hard drive and assign it to my class property
-				$this->hardDrives[$tempHDIdentifier] = new HardDrive($tempHDIdentifier);
-			}
-		}
-	}
-		
-	private function _cleanFdiskLine($fdiskInput) {
+	protected function _cleanFdiskLine($fdiskInput) {
 		/*
 		 * This function will take a single line of output from fdisk and break it down to return the 
 		 * linux disk identifier
@@ -452,7 +338,7 @@ class Machine {
 		return $tempSingleInput;
 	}
 		
-	private function _fdiskOutputCreation() {
+	protected function _fdiskOutputCreation() {
 		/*
 		 * This function will use system commands to output the physical
 		 * disk information for us throughout many of our functions
@@ -460,7 +346,7 @@ class Machine {
 		exec('sudo fdisk -l | grep -e "^Disk /"', $this->fdiskOutput);	
 	}
 
-	private function _getSystemSerialNumber() {
+	protected function _getSystemSerialNumber() {
 		/*
 		 * Here we will use the exec command to pull the system serial number and then
 		 * hand it back to the calling function
@@ -472,7 +358,7 @@ class Machine {
 		 return array_shift($tempSerialNumber);
 	}
 	
-	private function _getBaseboardSerialNumber() {
+	protected function _getBaseboardSerialNumber() {
 		/*
 		 * Here we will use the exec command to pull the baseboard serial number and then
 		 * hand it back to the calling function
@@ -485,7 +371,7 @@ class Machine {
 		
 	}
 	
-	private function _getChassisSerialNumber() {
+	protected function _getChassisSerialNumber() {
 		/*
 		 * Here we will use the exec command to pull the chassis serial number and then
 		 * hand it back to the calling function

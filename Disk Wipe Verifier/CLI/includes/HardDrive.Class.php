@@ -49,15 +49,6 @@ class HardDrive {
 		// Set the Fdisk output for this hard drive instance - specifically for determining the partition counts
 		$this->setSingleFdiskOutput();
 		
-		// Set the Hdparm output for this hard drive instance - specifically for gathering the serial number
-		$this->setSingleHdparmOutput();
-		
-		// Determine whether or not this is a valid disk
-		$this->setValidDisk();
-		
-		// Set the hard drive serial number
-		$this->setDiskSerialNumber();
-		
 		// Set the partition count for this hard drive
 		$this->setPartitionCount();
 		
@@ -385,7 +376,7 @@ class HardDrive {
 		writeToLogFile("Hard Drive Class ", "setWipeValidation - end - partitionCount={$this->partitionCount} wipeMethod={$this->wipeMethod}", $this->logFile);
 	}
 	
-	private function _cleanHDIdentification($HDIdentification) {
+	protected function _cleanHDIdentification($HDIdentification) {
 		//This function will take the model, firmware and serial and return them without
 		//the beginning entry
 		
@@ -396,7 +387,7 @@ class HardDrive {
 		return $temp_hd_info[1];
 	}
 	
-	private function _getDrilledHardDriveSerialNumber() {
+	protected function _getDrilledHardDriveSerialNumber() {
 		/*
 		 * This function will read stdin to get the serial number of the hard drive that was drilled
 		 */		
