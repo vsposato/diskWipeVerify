@@ -24,28 +24,28 @@
 			switch ($secondAnswer) {
 				case "1":
 					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'http://spxyric1.bankofamerica.com';
+					$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
 					$returnResponse['PROXY_PORT'] = 8080;
 					$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
 						
 					break;
 				case "2":
 					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'http://spxyric1.bankofamerica.com';
+					$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
 					$returnResponse['PROXY_PORT'] = 8080;
 					$returnResponse['PROXY_TYPE'] = CURLPROXY_SOCKS5;
 						
 					break;
 				case "3":
 					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'spxyric1.bankofamerica.com';
+					$returnResponse['PROXY'] = 'webproxy.bankofamerica.com';
 					$returnResponse['PROXY_PORT'] = 8080;
 					$returnResponse['PROXY_TYPE'] = CURLPROXY_SOCKS5;
 						
 					break;
 				case "4":
 					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'spxyric1.bankofamerica.com';
+					$returnResponse['PROXY'] = 'webproxy.bankofamerica.com';
 					$returnResponse['PROXY_PORT'] = 8080;
 					$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
 						
