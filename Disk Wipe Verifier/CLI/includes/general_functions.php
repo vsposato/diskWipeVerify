@@ -19,41 +19,10 @@
 			// Set the location to bank
 			$returnResponse['LOCATION'] = 'bank';
 			
-			$secondAnswer = getResponseFromUser("Attempt (1), Attempt (2), Attempt (3), or Attempt (4)? (1, 2, 3, 4)  \n", array('1','2','3','4'),FALSE);
-
-			switch ($secondAnswer) {
-				case "1":
-					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
-					$returnResponse['PROXY_PORT'] = 8080;
-					$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
-						
-					break;
-				case "2":
-					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
-					$returnResponse['PROXY_PORT'] = 8080;
-					$returnResponse['PROXY_TYPE'] = CURLPROXY_SOCKS5;
-						
-					break;
-				case "3":
-					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'webproxy.bankofamerica.com';
-					$returnResponse['PROXY_PORT'] = 8080;
-					$returnResponse['PROXY_TYPE'] = CURLPROXY_SOCKS5;
-						
-					break;
-				case "4":
-					// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-					$returnResponse['PROXY'] = 'webproxy.bankofamerica.com';
-					$returnResponse['PROXY_PORT'] = 8080;
-					$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
-						
-					break;
-				default:
-					
-					break;
-			}
+			// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
+			$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
+			$returnResponse['PROXY_PORT'] = 8080;
+			$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
 				
 			// We need to get the user's username and password in order for the proxy to function - however we have to get the pieces separate and then combine
 			// them into the format CURL is looking for username:password
