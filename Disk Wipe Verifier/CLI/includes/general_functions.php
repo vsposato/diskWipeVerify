@@ -20,7 +20,7 @@
 			$returnResponse['LOCATION'] = 'bank';
 			
 			// The user has selected bank so we are going to set the proxy type, proxy address, and proxy port
-			$returnResponse['PROXY'] = 'http://webproxy.bankofamerica.com';
+			$returnResponse['PROXY'] = 'webproxy.bankofamerica.com';
 			$returnResponse['PROXY_PORT'] = 8080;
 			$returnResponse['PROXY_TYPE'] = CURLPROXY_HTTP;
 				
