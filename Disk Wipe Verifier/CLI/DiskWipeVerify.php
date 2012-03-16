@@ -124,8 +124,9 @@
 		echo "\n We are not on the internet and the technician confirmed offline mode! \n";
 		
 	}
-	// Dump the object to the screen
-	writeToLogFile("Main Script ",objectToArray($checkDevice),$logFile);
+
+	// Now we need to clean up IP addresses so the DHCP server doesn't run out of addresses
+	releaseIPAddress(array('eth0','eth1','eth2','eth3'));
 
 	// Close the log file
 	closeLogFile($logFile, $checkDevice->getSerialNumber());

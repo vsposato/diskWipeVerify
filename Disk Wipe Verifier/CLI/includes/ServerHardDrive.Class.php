@@ -205,6 +205,8 @@ class ServerHardDrive extends HardDrive {
 		// Logical disks in an array will provide a blank serial number - so pass LOGICALDISK in instead - prevents POST errors
 		if ($serialNumber == "") {
 			$serialNumber = "LOGICALDISK";
+			// We also need to set this as an invalid disk to prevent the system from failing
+			$this->validDisk = FALSE;
 		}
 		
 		// Return the result to the calling routine

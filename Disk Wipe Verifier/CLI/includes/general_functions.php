@@ -39,6 +39,57 @@
 		// Return response to calling function
 		return $returnResponse;
 	}
+	
+	function releaseIPAddress($interfaces = NULL) {
+		/*
+		 * This function will release the ip address of an interface that is defined through the calling paramter
+		 */
+		
+		global $logFile;
+		
+		if (is_array($interfaces)) {
+			
+			// This is an array of interfaces so we need to work through each one
+			foreach ($interfaces as $interface) {
+				
+				// First check to see if the interface provided is null or blank
+				if (empty($interface)) {
+					// Just go to the next one
+					continue;
+				}
+				
+				// We have a good interface so now we need to build a command
+				$releaseCommand = "sudo dhclient {$interface} -r";
+				$releaseOutput = "";
+				$releaseReturn = "";
+				
+				// Execute the release IP Address command
+				exec($releaseCommand, $releaseOutput, $releaseReturn);
+				
+				// Write to the log file the results
+				writeToLogFile("Release IP Address ", "{$interface} released with command {$releaseCommand} and returned {$releaseOutput} as output with a exit value of {$releaseReturn}", $logFile);
+			}
+			
+		} else {
+
+			// It is a single entry so we need to just run it
+			if (! empty($interfaces)) {
+				// This has an entry so we need to go ahead and use it
+				// We have a good interface so now we need to build a command
+				$releaseCommand = "sudo dhclient {$interfaces} -r";
+				$releaseOutput = "";
+				$releaseReturn = "";
+				
+				// Execute the release IP Address command
+				exec($releaseCommand, $releaseOutput, $releaseReturn);
+				
+				// Write to the log file the results
+				writeToLogFile("Release IP Address ", "{$interfaces} released with command {$releaseCommand} and returned {$releaseOutput} as output with a exit value of {$releaseReturn}", $logFile);
+				
+			}
+		}
+	}
+	
 	function getResponseFromUser ($prompt, $responses, $password = FALSE) {
 		/*
 		 * This function will take a prompt and a list of responses and get an answer back from the user at the console
