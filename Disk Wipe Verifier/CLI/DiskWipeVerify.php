@@ -127,9 +127,19 @@
 
 	// Now we need to clean up IP addresses so the DHCP server doesn't run out of addresses
 	releaseIPAddress(array('eth0','eth1','eth2','eth3'));
-
+	
 	// Close the log file
 	closeLogFile($logFile, $checkDevice->getSerialNumber());
+	
+	// Show a shutdown message
+	echo "We are going to be shutting down - as soon as you press a key!";
+	
+	// Now we are going to send a pause command to the command line
+	passthru('pause');
+	
+	// Shut the machine down
+	passthru('sudo shutdown -h now');
+	
 	
 /*
  * End of File: DiskWipeVerify.php
